@@ -3,7 +3,7 @@ OBJPATH = obj
 TARPATH = bin
 
 CC = gcc
-CFLAGS = -Wall -g -Og
+CFLAGS = -Wall -g -Og -DDEBUG
 LDFLAGS = -lm
 
 PROXY = proxy

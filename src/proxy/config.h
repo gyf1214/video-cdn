@@ -8,10 +8,17 @@ extern struct Config {
     void (*parse)(int, char **);
 
     // data
+    FILE *logging;
     float alpha;
+    // listen addr
     struct sockaddr listen;
-    const char *backend;
+    // local bind addr
+    struct sockaddr local;
+    const char *backendHost;
+    in_addr_t backendIP;
+    // backend port
     uint16_t backendPort;
+    // dns addr
     struct sockaddr dns;
 } config;
 

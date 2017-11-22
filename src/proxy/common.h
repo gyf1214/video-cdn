@@ -6,5 +6,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <netdb.h>
+#include <arpa/inet.h>
+#include <assert.h>
 
 #endif
