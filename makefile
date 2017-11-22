@@ -1,2 +1,3 @@
 # TODO
 all:
+	echo nothing
