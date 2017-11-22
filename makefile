@@ -1,6 +1,7 @@
 SRCPATH = src
 OBJPATH = obj
 TARPATH = bin
+LOGPATH = log
 
 CC = gcc
 CFLAGS = -Wall -g -Og -DDEBUG
@@ -12,6 +13,7 @@ LIBPROXY = main config
 OBJPROXY = $(patsubst %,$(OBJPATH)/$(PROXY)/%.o,$(LIBPROXY))
 
 all: $(TARPROXY)
+	mkdir -p $(LOGPATH)
 
 $(TARPROXY) : $(OBJPROXY)
 	mkdir -p $(dir $@)
