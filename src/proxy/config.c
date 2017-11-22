@@ -33,6 +33,4 @@ static void parse(int argc, char **argv) {
     }
 }
 
-struct Config config = {
-    parse
-};
+struct Config config = { parse };
