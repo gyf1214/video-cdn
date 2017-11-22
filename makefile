@@ -4,7 +4,7 @@ TARPATH = bin
 
 CC = gcc
 CFLAGS = -Wall -g -Og
-LDFLAGS =
+LDFLAGS = -lm
 
 PROXY = proxy
 TARPROXY = $(TARPATH)/$(PROXY)
