@@ -79,8 +79,8 @@ static void listenSocket(Socket *s, SocketCallback cb) {
 
 static void loop() {
     while (!local.stop) {
-        FD_COPY(&local.waitRead, &local.selectRead);
-        FD_COPY(&local.waitWrite, &local.selectWrite);
+        local.selectRead = local.waitRead;
+        local.selectWrite = local.waitWrite;
         int ret = select(local.nfds, &local.selectRead,
             &local.selectWrite, NULL, &local.timeout);
 
@@ -88,7 +88,8 @@ static void loop() {
         if (!ret) {
             logv("select timeout, nothing");
         } else {
-            for (int i = 0; i < local.nfds; ++i) {
+            int i;
+            for (i = 0; i < local.nfds; ++i) {
                 Socket *sock = local.sock[i];
                 if (FD_ISSET(i, &local.selectRead)) {
                     logv("read %d", i);
