@@ -6,7 +6,7 @@ static struct {
     fd_set waitRead, selectRead;
     fd_set waitWrite, selectWrite;
     int stop;
-    struct timeval timeout;
+    struct timeval timeout, wait;
 } local;
 
 static void waitSet(int fd, fd_set *set, int flag) {
@@ -81,8 +81,9 @@ static void loop() {
     while (!local.stop) {
         local.selectRead = local.waitRead;
         local.selectWrite = local.waitWrite;
+        local.wait = local.timeout;
         int ret = select(local.nfds, &local.selectRead,
-            &local.selectWrite, NULL, &local.timeout);
+            &local.selectWrite, NULL, &local.wait);
 
         success(ret);
         if (!ret) {
