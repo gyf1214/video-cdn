@@ -20,6 +20,7 @@ int main(int argc, char **argv) {
 
     Socket *server = io.socket(SOCK_STREAM, &config.listen);
     io.listen(server, serverHandler);
+    io.loop();
 
     return 0;
 }
