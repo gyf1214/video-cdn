@@ -11,7 +11,7 @@ void serverHandler(Socket *s, int flag) {
 
     logv("accept %d", fd);
 
-    // success(close(fd));
+    success(close(fd));
 }
 
 int main(int argc, char **argv) {
