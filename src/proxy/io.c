@@ -30,6 +30,20 @@ static void clearSet(int fd, fd_set *set, int flag) {
 #define clearRead(fd)  clearSet(fd, &local.waitRead, IOWaitRead)
 #define clearWrite(fd) clearSet(fd, &local.waitWrite, IOWaitWrite)
 
+static void stopHandler(int sig) {
+    logv("signal caught");
+    assert(sig == SIGINT || sig == SIGTERM);
+    local.stop = 1;
+    local.nfds = 0;
+    int i;
+    for (i = 0; i < IOMaxSocket; ++i) {
+        if (local.sock[i]) {
+            success(close(i));
+            free(local.sock[i]);
+        }
+    }
+}
+
 static void init() {
     memset(local.sock, 0, IOMaxSocket * sizeof(Socket *));
     local.nfds = 0;
@@ -38,6 +52,8 @@ static void init() {
     local.stop = 0;
     local.timeout.tv_sec = IOTimeout;
     local.timeout.tv_usec = 0;
+    assert(signal(SIGINT, stopHandler) != SIG_ERR);
+    assert(signal(SIGTERM, stopHandler) != SIG_ERR);
 }
 
 static Socket *newSocket(int fd) {
@@ -78,12 +94,14 @@ static void listenSocket(Socket *s, SocketCallback cb) {
 }
 
 static void loop() {
-    while (!local.stop) {
+    while (1) {
         local.selectRead = local.waitRead;
         local.selectWrite = local.waitWrite;
         local.wait = local.timeout;
         int ret = select(local.nfds, &local.selectRead,
             &local.selectWrite, NULL, &local.wait);
+
+        if (local.stop) break;
 
         success(ret);
         if (!ret) {
@@ -108,6 +126,8 @@ static void loop() {
             }
         }
     }
+
+    logv("close loop");
 }
 
 struct IO io = {
