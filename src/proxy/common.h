@@ -8,6 +8,7 @@
 #include <math.h>
 #include <netdb.h>
 #include <sys/select.h>
+#include <signal.h>
 #include <arpa/inet.h>
 #include <assert.h>
 
