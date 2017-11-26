@@ -31,7 +31,7 @@ static void clearSet(int fd, fd_set *set, int flag) {
 #define clearWrite(fd) clearSet(fd, &local.waitWrite, IOWaitWrite)
 
 static void stopHandler(int sig) {
-    logv("signal caught");
+    logv("signal %d caught", sig);
     assert(sig == SIGINT || sig == SIGTERM);
     local.stop = 1;
     local.nfds = 0;
