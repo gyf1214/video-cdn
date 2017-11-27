@@ -3,11 +3,13 @@
 
 #include "common.h"
 
+#define ConfigBackendPort 8080
+
 extern struct Config {
     // parse args
     void (*parse)(int, char **);
 
-    // data
+    // config data
     FILE *logging;
     float alpha;
     // listen addr

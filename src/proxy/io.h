@@ -23,11 +23,22 @@ struct Socket {
 };
 
 extern struct IO {
+    // call before using io loop
     void (*init)(void);
+
+    // io main loop
     void (*loop)(void);
+
+    // new socket from binding address
     Socket *(*socket)(int, const struct sockaddr_in *);
+
+    // close socket and release handler
     void (*close)(Socket *);
+
+    // listen on socket and set handler
     void (*listen)(Socket *, SocketCallback);
+
+    // accept and return the new Socket & peer address
     Socket *(*accept)(Socket *, struct sockaddr_in *);
 } io;
 
