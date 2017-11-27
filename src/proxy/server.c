@@ -13,7 +13,7 @@ static void listenHandler(Socket *s, int flag) {
     // io.close(r);
 }
 
-static void createServer(struct sockaddr *addr) {
+static void createServer(struct sockaddr_in *addr) {
     local.listen = io.socket(SOCK_STREAM, addr);
     io.listen(local.listen, listenHandler);
 }

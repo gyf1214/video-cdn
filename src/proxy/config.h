@@ -11,15 +11,15 @@ extern struct Config {
     FILE *logging;
     float alpha;
     // listen addr
-    struct sockaddr listen;
+    struct sockaddr_in listen;
     // local bind addr
-    struct sockaddr local;
+    struct sockaddr_in local;
     const char *backendHost;
     in_addr_t backendIP;
     // backend port
     uint16_t backendPort;
     // dns addr
-    struct sockaddr dns;
+    struct sockaddr_in dns;
 } config;
 
 #endif

@@ -74,11 +74,12 @@ static Socket *newSocket(int fd) {
     return sock;
 }
 
-static Socket *bindSocket(int type, const struct sockaddr* addr) {
+static Socket *bindSocket(int type, const struct sockaddr_in* addr) {
     int fd = socket(PF_INET, type, 0);
     assert(fd >= 0 && fd < IOMaxSocket);
-    success(bind(fd, addr, sizeof(struct sockaddr_in)));
+    success(bind(fd, (const struct sockaddr *)addr, sizeof(struct sockaddr_in)));
 
+    logv("bind %d to %s:%hu", fd, inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
     return newSocket(fd);
 }
 
@@ -90,6 +91,7 @@ static void closeSocket(Socket *s) {
     success(close(fd));
 
     free(s);
+    logv("close %d", fd);
 }
 
 static void listenSocket(Socket *s, SocketCallback cb) {
@@ -98,6 +100,7 @@ static void listenSocket(Socket *s, SocketCallback cb) {
     waitRead(s->fd);
     s->flags |= IOWaitLoop;
     s->callback = cb;
+    logv("listen %d", s->fd);
 }
 
 static void loop() {
@@ -118,13 +121,13 @@ static void loop() {
             for (i = 0; i < local.nfds; ++i) {
                 Socket *sock = local.sock[i];
                 if (FD_ISSET(i, &local.selectRead)) {
-                    logv("read %d", i);
+                    logv("read signal from %d", i);
                     if (!(sock->flags & IOWaitLoop)) {
                         clearRead(i);
                     }
                     sock->callback(sock, IOWaitRead);
                 } else if (FD_ISSET(i, &local.selectWrite)) {
-                    logv("write %d", i);
+                    logv("write signal from %d", i);
                     if (!(sock->flags & IOWaitLoop)) {
                         clearWrite(i);
                     }
@@ -134,7 +137,7 @@ static void loop() {
         }
     }
 
-    logv("close loop");
+    logv("loop end");
 }
 
 static Socket *acceptSocket(Socket *listen) {
@@ -145,10 +148,7 @@ static Socket *acceptSocket(Socket *listen) {
     success(fd);
     assert(len == sizeof(struct sockaddr_in));
 
-    char str[INET_ADDRSTRLEN];
-    assert(inet_ntop(AF_INET, &addr.sin_addr, str, len));
-    logv("accept %d from %s:%hu", fd, str, ntohs(addr.sin_port));
-
+    logv("accept %d from %s:%hu", fd, inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
     return newSocket(fd);
 }
 

@@ -4,7 +4,7 @@
 #include "common.h"
 
 extern struct Server {
-    void (*create)(struct sockaddr *);
+    void (*create)(struct sockaddr_in *);
 } server;
 
 #endif
