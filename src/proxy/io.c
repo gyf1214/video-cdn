@@ -146,7 +146,7 @@ static Socket *acceptSocket(Socket *listen) {
     assert(len == sizeof(struct sockaddr_in));
 
     char str[INET_ADDRSTRLEN];
-    assert(inet_ntop(AF_INET, &addr, str, len));
+    assert(inet_ntop(AF_INET, &addr.sin_addr, str, len));
     logv("accept %d from %s:%hu", fd, str, ntohs(addr.sin_port));
 
     return newSocket(fd);

@@ -1,0 +1,15 @@
+#!/bin/bash
+
+repo=$(pwd)
+wtree=$repo/../deploy
+
+mkdir -p $wtree
+branch=$(git --git-dir=$repo rev-parse --symbolic --abbrev-ref $1)
+echo update to $branch
+git --git-dir=$repo --work-tree=$wtree checkout -f $branch
+
+cd $wtree
+echo build...
+make
+echo build finished
+
