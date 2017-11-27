@@ -9,7 +9,7 @@ LDFLAGS = -lm
 
 PROXY = proxy
 TARPROXY = $(TARPATH)/$(PROXY)
-LIBPROXY = main config io
+LIBPROXY = main config io server
 OBJPROXY = $(patsubst %,$(OBJPATH)/$(PROXY)/%.o,$(LIBPROXY))
 
 all: $(TARPROXY)

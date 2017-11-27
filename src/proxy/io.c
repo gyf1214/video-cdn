@@ -56,6 +56,12 @@ static void init() {
     assert(signal(SIGTERM, stopHandler) != SIG_ERR);
 }
 
+static void setNonblock(int fd) {
+    int flags = fcntl(fd, F_GETFL);
+    assert(flags != -1);
+    assert(fcntl(fd, F_SETFL, flags | O_NONBLOCK) != -1);
+}
+
 static Socket *newSocket(int fd) {
     Socket *sock = malloc(sizeof(Socket));
     sock->fd = fd;
@@ -63,6 +69,7 @@ static Socket *newSocket(int fd) {
     sock->callback = NULL;
     sock->data = NULL;
     local.sock[fd] = sock;
+    setNonblock(fd);
 
     return sock;
 }
@@ -130,8 +137,23 @@ static void loop() {
     logv("close loop");
 }
 
+static Socket *acceptSocket(Socket *listen) {
+    struct sockaddr_in addr;
+    socklen_t len = sizeof(struct sockaddr_in);
+
+    int fd = accept(listen->fd, (struct sockaddr *)&addr, &len);
+    success(fd);
+    assert(len == sizeof(struct sockaddr_in));
+
+    char str[INET_ADDRSTRLEN];
+    assert(inet_ntop(AF_INET, &addr, str, len));
+    logv("accept %d from %s:%hu", fd, str, ntohs(addr.sin_port));
+
+    return newSocket(fd);
+}
+
 struct IO io = {
     init, loop,
     bindSocket, closeSocket,
-    listenSocket
+    listenSocket, acceptSocket
 };
