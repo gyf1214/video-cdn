@@ -17,7 +17,7 @@ static void waitSet(int fd, fd_set *set, int flag) {
     if (fd >= local.nfds) local.nfds = fd + 1;
 }
 
-static void clearSet(int fd, fd_set *set, int flag) {
+static void waitClear(int fd, fd_set *set, int flag) {
     assert(FD_ISSET(fd, set));
     FD_CLR(fd, set);
     local.sock[fd]->flags &= ~flag;
@@ -25,10 +25,10 @@ static void clearSet(int fd, fd_set *set, int flag) {
     while (!local.sock[local.nfds - 1]->flags) --local.nfds;
 }
 
-#define waitRead(fd)   waitSet(fd, &local.waitRead, IOWaitRead)
-#define waitWrite(fd)  waitSet(fd, &local.waitWrite, IOWaitWrite)
-#define clearRead(fd)  clearSet(fd, &local.waitRead, IOWaitRead)
-#define clearWrite(fd) clearSet(fd, &local.waitWrite, IOWaitWrite)
+#define setRead(fd)   waitSet(fd, &local.waitRead, IOWaitRead)
+#define setWrite(fd)  waitSet(fd, &local.waitWrite, IOWaitWrite)
+#define clearRead(fd)  waitClear(fd, &local.waitRead, IOWaitRead)
+#define clearWrite(fd) waitClear(fd, &local.waitWrite, IOWaitWrite)
 
 static void stopHandler(int sig) {
     logv("signal %d caught", sig);
@@ -97,7 +97,7 @@ static void closeSocket(Socket *s) {
 static void listenSocket(Socket *s, SocketCallback cb) {
     success(listen(s->fd, IOMaxListen));
 
-    waitRead(s->fd);
+    setRead(s->fd);
     s->flags |= IOWaitLoop;
     s->callback = cb;
     logv("listen %d", s->fd);
@@ -140,15 +140,16 @@ static void loop() {
     logv("loop end");
 }
 
-static Socket *acceptSocket(Socket *listen) {
-    struct sockaddr_in addr;
+static Socket *acceptSocket(Socket *listen, struct sockaddr_in *addr) {
+    struct sockaddr_in tmp;
     socklen_t len = sizeof(struct sockaddr_in);
+    if (!addr) addr = &tmp;
 
     int fd = accept(listen->fd, (struct sockaddr *)&addr, &len);
     success(fd);
     assert(len == sizeof(struct sockaddr_in));
 
-    logv("accept %d from %s:%hu", fd, inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+    logv("accept %d from %s:%hu", fd, inet_ntoa(addr->sin_addr), ntohs(addr->sin_port));
     return newSocket(fd);
 }
 

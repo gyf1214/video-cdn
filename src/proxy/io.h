@@ -28,7 +28,7 @@ extern struct IO {
     Socket *(*socket)(int, const struct sockaddr_in *);
     void (*close)(Socket *);
     void (*listen)(Socket *, SocketCallback);
-    Socket *(*accept)(Socket *);
+    Socket *(*accept)(Socket *, struct sockaddr_in *);
 } io;
 
 #endif
