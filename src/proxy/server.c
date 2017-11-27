@@ -8,8 +8,9 @@ static struct {
 static void listenHandler(Socket *s, int flag) {
     assert(flag == IOWaitRead);
 
-    Socket *r = io.accept(s);
-    io.close(r);
+    io.accept(s);
+    // Socket *r = io.accept(s);
+    // io.close(r);
 }
 
 static void createServer(struct sockaddr *addr) {
