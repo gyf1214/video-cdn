@@ -14,15 +14,15 @@ static int fill(Chunk *c) {
     int n = read(c->fd, &c->data[c->tail], BufferMaxSize - c->tail - 1);
     if (n > 0) {
         c->tail += n;
+        logv("fill %d with %d bytes", c->fd, n);
     }
-    logv("fill %d with return %d", c->fd, n);
     return n;
 }
 
 static void consume(Chunk *c, int x) {
     assert(x <= c->seek - c->head);
     c->head += x;
-    logv("consume %d from %d", x, c->fd);
+    logv("consume %d bytes from %d", x, c->fd);
 
     if (c->tail == c->head) {
         reset(c);
