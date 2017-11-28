@@ -13,9 +13,9 @@ typedef struct {
 
 static void releaseSocket(Socket *s) {
     Conn *c = (Conn *)s->data;
+    logv("close connection %d", s->fd);
     io.close(s);
     free(c);
-    logv("close connection %d", s->fd);
 }
 
 static void readHandler(Socket *s, Conn *c) {
