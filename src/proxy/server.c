@@ -75,6 +75,8 @@ static void listenHandler(Socket *s, int flag) {
     buffer.init(&conn->buf, cs->fd);
     cs->callback = connHandler;
     cs->data = conn;
+
+    io.wait(cs, IOWaitRead);
 }
 
 static void createServer(struct sockaddr_in *addr) {
