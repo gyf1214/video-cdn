@@ -24,4 +24,4 @@ $(TARPROXY) : $(OBJPROXY)
 
 $(OBJPATH)/%.o : $(SRCPATH)/%.c makefile
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c -o $@ $^
+	$(CC) $(CFLAGS) -c -o $@ $<
