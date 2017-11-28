@@ -34,7 +34,8 @@ static void waitClear(Socket *sock, int flag) {
         FD_CLR(sock->fd, &local.waitWrite);
     }
 
-    while (!local.sock[local.nfds - 1]->flags) --local.nfds;
+    while (!local.sock[local.nfds - 1] ||
+           !local.sock[local.nfds - 1]->flags) --local.nfds;
 }
 
 static void setNonblock(int fd) {
