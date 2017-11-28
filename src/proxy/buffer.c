@@ -30,7 +30,7 @@ static void consume(Chunk *c, int x) {
 }
 
 static char *flush(Chunk *c) {
-    if (c->head <= c->tail) {
+    if (c->head >= c->tail) {
         return NULL;
     }
 
