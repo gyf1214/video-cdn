@@ -70,7 +70,6 @@ static void connHandler(Socket *s, int flag) {
 
 static void listenHandler(Socket *s, int flag) {
     assert(flag == IOWaitRead);
-    logv("new connection");
 
     Conn *conn = malloc(sizeof(Conn));
     conn->proxy = NULL;
@@ -81,6 +80,8 @@ static void listenHandler(Socket *s, int flag) {
     cs->data = conn;
 
     io.wait(cs, IOWaitRead);
+    logv("new connection %d from %s:%hu", cs->fd,
+        inet_ntoa(conn->peer.sin_addr), ntohs(conn->peer.sin_port));
 }
 
 static void createServer(struct sockaddr_in *addr) {
