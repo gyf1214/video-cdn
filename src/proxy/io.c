@@ -156,5 +156,6 @@ static Socket *acceptSocket(Socket *listen, struct sockaddr_in *addr) {
 struct IO io = {
     init, loop,
     bindSocket, closeSocket,
-    listenSocket, acceptSocket
+    listenSocket, acceptSocket,
+    waitSet, waitClear,
 };
