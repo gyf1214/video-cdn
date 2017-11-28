@@ -9,51 +9,32 @@ static struct {
     struct timeval timeout, wait;
 } local;
 
-static void waitSet(int fd, fd_set *set, int flag) {
-    assert(!FD_ISSET(fd, set));
-    FD_SET(fd, set);
-    local.sock[fd]->flags |= flag;
+static void waitSet(Socket *sock, int flag) {
+    if (!flag) return;
 
-    if (fd >= local.nfds) local.nfds = fd + 1;
+    sock->flags |= flag;
+    if (flag & IOWaitRead) {
+        FD_SET(sock->fd, &local.waitRead);
+    }
+    if (flag & IOWaitWrite) {
+        FD_SET(sock->fd, &local.waitWrite);
+    }
+
+    if (sock->fd >= local.nfds) local.nfds = sock->fd + 1;
 }
 
-static void waitClear(int fd, fd_set *set, int flag) {
-    assert(FD_ISSET(fd, set));
-    FD_CLR(fd, set);
-    local.sock[fd]->flags &= ~flag;
+static void waitClear(Socket *sock, int flag) {
+    if (!flag) return;
+
+    sock->flags &= ~flag;
+    if (flag & IOWaitRead) {
+        FD_CLR(sock->fd, &local.waitRead);
+    }
+    if (flag & IOWaitWrite) {
+        FD_CLR(sock->fd, &local.waitWrite);
+    }
 
     while (!local.sock[local.nfds - 1]->flags) --local.nfds;
-}
-
-#define setRead(fd)   waitSet(fd, &local.waitRead, IOWaitRead)
-#define setWrite(fd)  waitSet(fd, &local.waitWrite, IOWaitWrite)
-#define clearRead(fd)  waitClear(fd, &local.waitRead, IOWaitRead)
-#define clearWrite(fd) waitClear(fd, &local.waitWrite, IOWaitWrite)
-
-static void stopHandler(int sig) {
-    logv("signal %d caught", sig);
-    assert(sig == SIGINT || sig == SIGTERM);
-    local.stop = 1;
-    local.nfds = 0;
-    int i;
-    for (i = 0; i < IOMaxSocket; ++i) {
-        if (local.sock[i]) {
-            success(close(i));
-            free(local.sock[i]);
-        }
-    }
-}
-
-static void init() {
-    memset(local.sock, 0, IOMaxSocket * sizeof(Socket *));
-    local.nfds = 0;
-    FD_ZERO(&local.waitRead);
-    FD_ZERO(&local.waitWrite);
-    local.stop = 0;
-    local.timeout.tv_sec = IOTimeout;
-    local.timeout.tv_usec = 0;
-    assert(signal(SIGINT, stopHandler) != SIG_ERR);
-    assert(signal(SIGTERM, stopHandler) != SIG_ERR);
 }
 
 static void setNonblock(int fd) {
@@ -84,7 +65,7 @@ static Socket *bindSocket(int type, const struct sockaddr_in* addr) {
 }
 
 static void closeSocket(Socket *s) {
-    assert(!s->flags);
+    waitClear(s, IOWaitRead | IOWaitWrite);
 
     int fd = s->fd;
     local.sock[fd] = NULL;
@@ -97,10 +78,34 @@ static void closeSocket(Socket *s) {
 static void listenSocket(Socket *s, SocketCallback cb) {
     success(listen(s->fd, IOMaxListen));
 
-    setRead(s->fd);
-    s->flags |= IOWaitLoop;
+    waitSet(s, IOWaitRead);
     s->callback = cb;
     logv("listen %d", s->fd);
+}
+
+static void stopHandler(int sig) {
+    logv("signal %d caught", sig);
+    assert(sig == SIGINT || sig == SIGTERM);
+    local.stop = 1;
+    local.nfds = 0;
+    int i;
+    for (i = 0; i < IOMaxSocket; ++i) {
+        if (local.sock[i]) {
+            closeSocket(local.sock[i]);
+        }
+    }
+}
+
+static void init() {
+    memset(local.sock, 0, IOMaxSocket * sizeof(Socket *));
+    local.nfds = 0;
+    FD_ZERO(&local.waitRead);
+    FD_ZERO(&local.waitWrite);
+    local.stop = 0;
+    local.timeout.tv_sec = IOTimeout;
+    local.timeout.tv_usec = 0;
+    assert(signal(SIGINT, stopHandler) != SIG_ERR);
+    assert(signal(SIGTERM, stopHandler) != SIG_ERR);
 }
 
 static void loop() {
@@ -122,15 +127,9 @@ static void loop() {
                 Socket *sock = local.sock[i];
                 if (FD_ISSET(i, &local.selectRead)) {
                     logv("read signal from %d", i);
-                    if (!(sock->flags & IOWaitLoop)) {
-                        clearRead(i);
-                    }
                     sock->callback(sock, IOWaitRead);
                 } else if (FD_ISSET(i, &local.selectWrite)) {
                     logv("write signal from %d", i);
-                    if (!(sock->flags & IOWaitLoop)) {
-                        clearWrite(i);
-                    }
                     sock->callback(sock, IOWaitWrite);
                 }
             }

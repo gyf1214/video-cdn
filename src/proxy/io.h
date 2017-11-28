@@ -5,7 +5,6 @@
 
 #define IOWaitRead  0x01
 #define IOWaitWrite 0x02
-#define IOWaitLoop  0x04
 
 #define IOMaxListen 1024
 #define IOMaxSocket FD_SETSIZE
@@ -40,6 +39,12 @@ extern struct IO {
 
     // accept and return the new Socket & peer address
     Socket *(*accept)(Socket *, struct sockaddr_in *);
+
+    // set socket wait flags
+    void (*wait)(Socket *, int);
+
+    // unset socket wait flags
+    void (*block)(Socket *, int);
 } io;
 
 #endif
