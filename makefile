@@ -4,7 +4,7 @@ TARPATH = bin
 LOGPATH = log
 
 CC = gcc
-CFLAGS = -Wall -g -Og -DDEBUG
+CFLAGS = -Wall -g -DDEBUG
 LDFLAGS = -lm
 
 PROXY = proxy
