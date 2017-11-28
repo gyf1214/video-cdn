@@ -144,7 +144,7 @@ static Socket *acceptSocket(Socket *listen, struct sockaddr_in *addr) {
     socklen_t len = sizeof(struct sockaddr_in);
     if (!addr) addr = &tmp;
 
-    int fd = accept(listen->fd, (struct sockaddr *)&addr, &len);
+    int fd = accept(listen->fd, (struct sockaddr *)addr, &len);
     success(fd);
     assert(len == sizeof(struct sockaddr_in));
 
