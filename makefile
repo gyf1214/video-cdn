@@ -15,10 +15,13 @@ OBJPROXY = $(patsubst %,$(OBJPATH)/$(PROXY)/%.o,$(LIBPROXY))
 all: $(TARPROXY)
 	mkdir -p $(LOGPATH)
 
+clean:
+	rm -fr $(OBJPATH) $(TARPATH)
+
 $(TARPROXY) : $(OBJPROXY)
 	mkdir -p $(dir $@)
 	$(CC) $(LDFLAGS) -o $@ $^
 
-$(OBJPATH)/%.o : $(SRCPATH)/%.c
+$(OBJPATH)/%.o : $(SRCPATH)/%.c makefile
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $^
