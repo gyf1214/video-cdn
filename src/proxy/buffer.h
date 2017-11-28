@@ -10,8 +10,10 @@ typedef struct Chunk {
     char data[BufferMaxSize];
 } Chunk;
 
-#define BufferReady(c) ((c)->seek > (c)->head)
-#define BufferFull(c)  ((c)->tail >= BufferMaxSize - 1)
+#define BufferReady(c)   ((c)->seek > (c)->head)
+#define BufferFull(c)    ((c)->tail >= BufferMaxSize - 1)
+#define BufferSeekLen(c) ((c)->seek - (c)->head)
+#define BufferHead(c)    (&(c)->data[(c)->head])
 
 extern struct Buffer {
     // init a chunk based on fd

@@ -1,6 +1,4 @@
 #include "server.h"
-#include "io.h"
-#include "buffer.h"
 
 static struct {
     Socket *listen;
@@ -8,17 +6,24 @@ static struct {
 
 typedef struct {
     struct sockaddr_in peer;
-    Socket *proxy;
     Chunk buf;
+    Socket *proxy;
+    Chunk *proxyBuf;
 } Conn;
+
+static void releaseSocket(Socket *s) {
+    Conn *c = (Conn *)s->data;
+    io.close(s);
+    free(c);
+    logv("close connection %d", s->fd);
+}
 
 static void readHandler(Socket *s, Conn *c) {
     int n = buffer.fill(&c->buf);
     // reset on fail
     if (n <= 0) {
-        logv("read from %d failed, close", s->fd);
-        io.close(s);
-        free(c);
+        logv("read from %d failed", s->fd);
+        releaseSocket(s);
         return;
     }
 
@@ -34,15 +39,14 @@ static void readHandler(Socket *s, Conn *c) {
 }
 
 static void writeHandler(Socket *s, Conn *c) {
-    char *data = buffer.flush(&c->buf);
-    int len = c->buf.seek - c->buf.head;
+    char *data = BufferHead(&c->buf);
+    int len = BufferSeekLen(&c->buf);
 
     int n = write(s->fd, data, len);
     // reset on fail
     if (n <= 0) {
         logv("write to %d failed, close", s->fd);
-        io.close(s);
-        free(c);
+        releaseSocket(s);
         return;
     }
 
@@ -85,5 +89,5 @@ static void createServer(struct sockaddr_in *addr) {
 }
 
 struct Server server = {
-    createServer
+    createServer, releaseSocket
 };
