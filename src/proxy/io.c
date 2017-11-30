@@ -84,6 +84,13 @@ static void listenSocket(Socket *s, SocketCallback cb) {
     logv("listen %d", s->fd);
 }
 
+static void connectSocket(Socket *s, const struct sockaddr_in *addr) {
+    int ret = connect(s->fd, (const struct sockaddr *)addr,
+        sizeof(struct sockaddr_in));
+
+    assert(!ret || errno == EINPROGRESS);
+}
+
 static void stopHandler(int sig) {
     logv("signal %d caught", sig);
     assert(sig == SIGINT || sig == SIGTERM);
@@ -107,6 +114,8 @@ static void init() {
     local.timeout.tv_usec = 0;
     assert(signal(SIGINT, stopHandler) != SIG_ERR);
     assert(signal(SIGTERM, stopHandler) != SIG_ERR);
+    // ignore SIGPIPE
+    assert(signal(SIGPIPE, SIG_IGN) != SIG_ERR);
 }
 
 static void loop() {
@@ -156,6 +165,6 @@ static Socket *acceptSocket(Socket *listen, struct sockaddr_in *addr) {
 struct IO io = {
     init, loop,
     bindSocket, closeSocket,
-    listenSocket, acceptSocket,
+    listenSocket, connectSocket, acceptSocket,
     waitSet, waitClear,
 };

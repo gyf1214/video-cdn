@@ -37,6 +37,9 @@ extern struct IO {
     // listen on socket and set handler
     void (*listen)(Socket *, SocketCallback);
 
+    // async connect
+    void (*connect)(Socket *, const struct sockaddr_in *);
+
     // accept and return the new Socket & peer address
     Socket *(*accept)(Socket *, struct sockaddr_in *);
 

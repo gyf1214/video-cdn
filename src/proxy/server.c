@@ -18,6 +18,21 @@ static void releaseSocket(Socket *s) {
     free(c);
 }
 
+static void parseRequest(Socket *s, Conn *c) {
+    char *line = buffer.readline(&c->buf);
+    if (!line) return;
+
+    // consume the line
+    buffer.consume(&c->buf, BufferSeekLen(&c->buf));
+    // notify read if buffer have free space
+    if (!BufferFull(&c->buf)) {
+        io.wait(s, IOWaitRead);
+    }
+
+    // TODO: parse HTTP request
+    logv("line: %s", line);
+}
+
 static void readHandler(Socket *s, Conn *c) {
     int n = buffer.fill(&c->buf);
     // reset on fail
@@ -32,9 +47,10 @@ static void readHandler(Socket *s, Conn *c) {
         io.block(s, IOWaitRead);
     }
 
-    // if chunk have data, notify write
-    if (buffer.flush(&c->buf)) {
-        io.wait(s, IOWaitWrite);
+    if (!c->proxy) {
+        parseRequest(s, c);
+    } else {
+        // TODO
     }
 }
 
@@ -73,6 +89,7 @@ static void listenHandler(Socket *s, int flag) {
 
     Conn *conn = malloc(sizeof(Conn));
     conn->proxy = NULL;
+    conn->proxyBuf = NULL;
 
     Socket *cs = io.accept(s, &conn->peer);
     buffer.init(&conn->buf, cs->fd);

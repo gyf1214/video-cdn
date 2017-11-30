@@ -37,10 +37,30 @@ static char *flush(Chunk *c) {
     c->seek = c->tail;
     c->data[c->seek] = 0;
 
-    return &c->data[c->head];
+    return BufferHead(c);
+}
+
+static char *readline(Chunk *c) {
+    while (c->seek < c->tail && c->data[c->seek] != 0 &&
+           c->data[c->seek] != '\r' && c->data[c->seek] != '\n') {
+        ++c->seek;
+    }
+
+    if (c->seek >= c->tail) {
+        return NULL;
+    }
+
+    c->data[c->seek] = 0;
+    if (c->seek + 1 < c->tail && c->data[c->seek] == '\r' &&
+        c->data[c->seek + 1] == '\n') {
+        ++c->seek;
+    }
+    ++c->seek;
+
+    return BufferHead(c);
 }
 
 struct Buffer buffer = {
     init, fill, consume,
-    flush
+    flush, readline
 };

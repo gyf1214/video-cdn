@@ -12,6 +12,7 @@
 #include <signal.h>
 #include <arpa/inet.h>
 #include <assert.h>
+#include <errno.h>
 
 #define success(x) assert((x) >= 0)
 
