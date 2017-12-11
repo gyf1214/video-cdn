@@ -6,9 +6,7 @@
 #include "buffer.h"
 
 extern struct Client {
-    Socket *(*createClient)(Socket *, struct sockaddr_in *);
-
-    void (*linkProxy)(Socket *, Chunk *);
+    Socket *(*createClient)(Socket *, Chunk *, const struct sockaddr_in *);
 } client;
 
 #endif

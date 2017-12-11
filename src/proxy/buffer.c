@@ -10,54 +10,57 @@ static void init(Chunk *c, int fd) {
     reset(c);
 }
 
+// assure buffer is not full
+// treat c->head == c->tail as empty
 static int fill(Chunk *c) {
-    int n = read(c->fd, &c->data[c->tail], BufferMaxSize - c->tail - 1);
+    int len = BufferTail(c);
+    int n = read(c->fd, &c->data[c->tail], len);
     if (n > 0) {
-        c->tail += n;
+        c->tail = (c->tail + n) % BufferMaxSize;
         logv("fill %d with %d bytes", c->fd, n);
     }
     return n;
 }
 
+// assure buffer is not empty
+// treat c->head == c->tail as full
 static void consume(Chunk *c, int x) {
-    assert(x <= c->seek - c->head);
-    c->head += x;
+    assert(x <= BufferSeek(c));
+    c->head = (c->head + x) % BufferMaxSize;
     logv("consume %d bytes from %d", x, c->fd);
-
-    if (c->tail == c->head) {
-        reset(c);
-    }
 }
 
-static char *flush(Chunk *c) {
-    if (c->head >= c->tail) {
-        return NULL;
-    }
-
+// assure buffer is not empty
+// treat c->head == c->tail as full
+static int flush(Chunk *c) {
     c->seek = c->tail;
-    c->data[c->seek] = 0;
 
-    return BufferHead(c);
+    return BufferSeek(c);
 }
 
-static char *readline(Chunk *c) {
-    while (c->seek < c->tail && c->data[c->seek] != 0 &&
-           c->data[c->seek] != '\r' && c->data[c->seek] != '\n') {
-        ++c->seek;
+// assure buffer is not empty
+// treat c->head == c->tail as full
+static int readline(Chunk *c) {
+    while ((c->seek != c->tail || c->tail == c->head) && c->data[c->seek] != 0 &&
+            c->data[c->seek] != '\r' && c->data[c->seek] != '\n') {
+        c->seek = (c->seek + 1) % BufferMaxSize;
     }
 
-    if (c->seek >= c->tail) {
-        return NULL;
+    if (c->seek == c->tail) {
+        return -1;
     }
 
     c->data[c->seek] = 0;
-    if (c->seek + 1 < c->tail && c->data[c->seek] == '\r' &&
-        c->data[c->seek + 1] == '\n') {
-        ++c->seek;
+    int len = BufferSeek(c);
+    int next = (c->seek + 1) % BufferMaxSize;
+    if (next != c->tail && c->data[c->seek] == '\r' &&
+        c->data[next] == '\n') {
+        c->seek = next;
     }
-    ++c->seek;
+    c->data[c->seek] = 0;
+    c->seek = (c->seek + 1) % BufferMaxSize;
 
-    return BufferHead(c);
+    return len;
 }
 
 struct Buffer buffer = {

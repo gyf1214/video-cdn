@@ -25,11 +25,12 @@ static void parse(int argc, char **argv) {
     addr->sin_port = htons(port);
 
     config.backendPort = htons(ConfigBackendPort);
+    config.backendHost = "video.pku.edu.cn";
+
     if (argc > 7) {
-        config.backendHost = NULL;
         config.backendIP = inet_addr(argv[7]);
     } else {
-        config.backendHost = "video.pku.edu.cn";
+        config.backendIP = 0;
     }
 }
 

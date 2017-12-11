@@ -10,10 +10,11 @@ typedef struct Chunk {
     char data[BufferMaxSize];
 } Chunk;
 
-#define BufferReady(c)   ((c)->seek > (c)->head)
-#define BufferFull(c)    ((c)->tail >= BufferMaxSize - 1)
-#define BufferSeekLen(c) ((c)->seek - (c)->head)
+#define BufferReady(c)   ((c)->head != (c)->tail)
 #define BufferHead(c)    (&(c)->data[(c)->head])
+#define BufferTail(c)    ((c)->tail >= (c)->head ? BufferMaxSize - (c)->tail : (c)->head - (c)->tail)
+#define BufferSeek(c)    ((c)->seek > (c)->head ? (c)->seek - (c)->head : BufferMaxSize + (c)->seek - (c)->head)
+#define BufferChar(c, x) ((c)->data[((c)->head + x) % BufferMaxSize])
 
 extern struct Buffer {
     // init a chunk based on fd
@@ -26,10 +27,10 @@ extern struct Buffer {
     void (*consume)(Chunk *, int);
 
     // seek to tail
-    char *(*flush)(Chunk *);
+    int (*flush)(Chunk *);
 
     // seek '\n' & '\r' and return the line
-    char *(*readline)(Chunk *);
+    int (*readline)(Chunk *);
 } buffer;
 
 #endif

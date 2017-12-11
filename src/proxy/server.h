@@ -5,6 +5,8 @@
 #include "io.h"
 #include "buffer.h"
 
+#define MaxRequestLine 2560
+
 extern struct Server {
     // create proxy server with listen address
     void (*create)(struct sockaddr_in *);
