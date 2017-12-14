@@ -12,10 +12,7 @@ extern struct Server {
     void (*create)(struct sockaddr_in *);
 
     // kill connection
-    void (*disconnect)(Socket *);
-
-    // called when proxy connection established
-    void (*linkProxy)(Socket *, Chunk *);
+    void (*release)(Socket *);
 } server;
 
 #endif

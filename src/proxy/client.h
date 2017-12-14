@@ -7,6 +7,12 @@
 
 extern struct Client {
     Socket *(*createClient)(Socket *, Chunk *, const struct sockaddr_in *);
+
+    Chunk *(*getBuffer)(Socket *);
+
+    void (*release)(Socket *);
+
+    int (*eof)(Socket *);
 } client;
 
 #endif
