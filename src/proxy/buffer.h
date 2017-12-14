@@ -48,6 +48,8 @@ extern struct Buffer {
 
     // write to fd
     int (*write)(Chunk *);
+
+    int (*append)(Chunk *, const char *);
 } buffer;
 
 #endif

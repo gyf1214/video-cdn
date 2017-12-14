@@ -39,8 +39,10 @@ static void consume(Chunk *c, int x) {
 
 static void consumeCRLF(Chunk *c) {
     assert(!BufferEmpty(c));
+    int len = BufferSeek(c);
+    if (len > 0) consume(c, len);
 
-    int len = 0;
+    len = 0;
     char ch = BufferChar(c, 0);
     if (ch == '\r' || ch == '\n') {
         ++len;
@@ -92,7 +94,17 @@ static int writeBuffer(Chunk *c) {
     return n;
 }
 
+static int appendBuffer(Chunk *c, const char *s) {
+    int len = 0;
+    while (!BufferFull(c) && *s) {
+        BufferAppend(c, *s++);
+        ++len;
+    }
+
+    return len;
+}
+
 struct Buffer buffer = {
     init, fill, consume, consumeCRLF,
-    flush, readline, writeBuffer
+    flush, readline, writeBuffer, appendBuffer,
 };

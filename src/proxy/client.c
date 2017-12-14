@@ -6,8 +6,11 @@
 #define StateHeader   2
 #define StateBody     3
 #define StateEof      4
+#define StateError    -1
 
-const char *ignoreHeaders[] = {
+#define IgnoreSize    3
+
+const char *ignoreHeaders[IgnoreSize] = {
     "Host", "Proxy-Connection", "Connection"
 };
 
@@ -49,12 +52,12 @@ static void readHandler(Socket *s, Conn *c) {
     io.wait(c->proxy, IOWaitWrite);
 }
 
-// 0  -> no request
-// 1  -> succ
-// -1 -> error
-static int parseRequest(Chunk *c, Chunk *o) {
+static int parseRequest(Chunk *c, Chunk *o, int *stop) {
     int len = buffer.readline(c);
-    if (len < 0) return 0;
+    if (len < 0) {
+        *stop = 1;
+        return StateRequest;
+    }
 
     int src = 0;
     char ch;
@@ -64,7 +67,7 @@ static int parseRequest(Chunk *c, Chunk *o) {
         BufferAppend(o, ch);
         ++src;
     }
-    if (src >= len) return -1;
+    if (src >= len) return StateError;
     BufferAppend(o, ' ');
     ++src;
 
@@ -76,7 +79,7 @@ static int parseRequest(Chunk *c, Chunk *o) {
            BufferChar(c, src + 1) == '/')) {
         ++src;
     }
-    if (src >= len) return -1;
+    if (src >= len) return StateError;
 
     if (BufferChar(c, src) == ' ') {
         BufferAppend(o, '/');
@@ -95,54 +98,71 @@ static int parseRequest(Chunk *c, Chunk *o) {
 
     o->data[o->tail] = 0;
     logv("proxy request: %s", o->data);
-    BufferAppend(o, '\r');
-    BufferAppend(o, '\n');
-
+    buffer.append(o, "\r\n");
     buffer.consumeEOL(c);
 
-    return 1;
+    return StateHeader;
 }
 
-// 0  -> nothing
-// 1  -> succ
-// 2  -> end of header (empty line)
-// -1 -> error
-static int parseHeader(Chunk *c, Chunk *o) {
+static int parseHeader(Chunk *c, Chunk *o, int *stop) {
     int len = buffer.readline(c);
-    if (len < 0) return 0;
+    if (len < 0) {
+        *stop = 1;
+        return StateHeader;
+    }
 
+    int ret = 0;
     if (!len) {
-        buffer.consumeEOL(c);
-        return 2;
+        ret = StateBody;
+    } else {
+        static char buf[BufferMaxSize];
+        char *tmp = buf;
+        char ch;
+        int i;
+
+        int src = 0;
+        while (src < len && (ch = BufferChar(c, src)) != ':') {
+            ++src;
+            *tmp++ = ch;
+        }
+        if (src >= len) return StateError;
+        *tmp++ = 0;
+
+        for (i = 0; i < IgnoreSize; ++i) {
+            if (!strcmp(tmp, ignoreHeaders[i])) {
+                logv("ignore header %s", tmp);
+                ret = StateHeader;
+            }
+        }
+
+        if (!ret) {
+            logv("pass header %s", tmp);
+
+            buffer.append(o, tmp);
+            buffer.append(o, ": ");
+            while (src < len) {
+                BufferAppend(o, BufferChar(c, src));
+            }
+            ret = StateHeader;
+        }
     }
 
-    char ch;
+    buffer.append(o, "\r\n");
+    buffer.consumeEOL(c);
 
-    int src = 0;
-    while (src < len && BufferChar(c, src) != ':') {
-        ++src;
-    }
-    if (src >= len) return -1;
-
+    return ret;
 }
 
 static void writeHandler(Socket *s, Conn *c) {
     int stop = 0;
-    int ret;
 
     while (!stop) {
         switch (c->state) {
             case StateRequest:
-            ret = parseRequest(c->proxyBuf, &c->out);
-            if (ret < 0) {
-                server.release(c->proxy);
-                return;
-            } else if (!ret) {
-                stop = 1;
-            } else {
-                c->state = StateHeader;
-            }
+            c->state = parseRequest(c->proxyBuf, &c->out, &stop);
             break;
+            case StateHeader:
+            c->state = parseHeader(c->proxyBuf, &c->out, &stop);
             default:
             logv("error parse request");
             server.release(c->proxy);
