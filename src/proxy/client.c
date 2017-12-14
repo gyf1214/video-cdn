@@ -130,18 +130,19 @@ static int parseHeader(Chunk *c, Chunk *o, int *stop) {
 
         for (i = 0; i < IgnoreSize; ++i) {
             if (!strcmp(tmp, ignoreHeaders[i])) {
-                logv("ignore header %s", tmp);
+                logv("ignore header %s", buf);
                 ret = StateHeader;
             }
         }
 
         if (!ret) {
-            logv("pass header %s", tmp);
+            logv("pass header %s", buf);
 
-            buffer.append(o, tmp);
+            buffer.append(o, buf);
             buffer.append(o, ": ");
             while (src < len) {
                 BufferAppend(o, BufferChar(c, src));
+                ++src;
             }
             ret = StateHeader;
         }
