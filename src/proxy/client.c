@@ -93,8 +93,8 @@ static int parseRequest(Chunk *c, Chunk *o) {
         BufferAppend(o, BufferChar(c, src++));
     }
 
-    c->data[c->tail] = 0;
-    logv("proxy request: %s", c->data);
+    o->data[o->tail] = 0;
+    logv("proxy request: %s", o->data);
     BufferAppend(o, '\r');
     BufferAppend(o, '\n');
 
