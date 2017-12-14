@@ -16,6 +16,8 @@
 
 #define success(x) assert((x) >= 0)
 
-#define logv(fmt, ...) fprintf(stderr, "[%s:%d]\t" fmt "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define __stringify(x) #x
+#define __at           "[" __FILE__ ":" __stringify(__LINE__) "]"
+#define logv(fmt, ...) fprintf(stderr, "%-20s" fmt "\n", __at, ##__VA_ARGS__)
 
 #endif
