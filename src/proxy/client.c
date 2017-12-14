@@ -163,7 +163,7 @@ static void connHandler(Socket *s, int flag) {
 }
 
 static Socket *createClient(Socket *s, Chunk *buf, const struct sockaddr_in *addr) {
-    Socket *cs = io.socket(SOCK_STREAM, addr);
+    Socket *cs = io.socket(SOCK_STREAM, &config.local);
 
     Conn *c = malloc(sizeof(Conn));
     c->peer = *addr;
