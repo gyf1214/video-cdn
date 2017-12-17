@@ -1,0 +1,28 @@
+#!/bin/bash
+
+margin=10
+proxy1=bin/proxy log/1-1.log $1 8888 1.0.0.1 5.0.0.1 5353 3.0.0.1 2> log/1-1-v.log &
+proxy2=bin/proxy log/1-2.log $2 8889 2.0.0.1 5.0.0.1 5353 4.0.0.1 2> log/1-2-v.log &
+
+echo "start netsim"
+pushd netsim
+./netsim.py ../topos/topo1 start
+popd
+
+echo "start proxy..."
+$proxy1
+$proxy2
+
+echo "wait for start video..."
+sleep $margin
+
+echo "run netsim..."
+pushd netsim
+./netsim.py -l ../log/1-n.log ../topos/topo1 run
+popd
+
+echo "wait for stop video..."
+sleep $margin
+
+echo "stop..."
+killall bin/proxy
