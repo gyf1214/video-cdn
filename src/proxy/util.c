@@ -1,20 +1,41 @@
 #include "util.h"
 #include "config.h"
+#include "dns.h"
+#include "io.h"
 
 #define MaxNumberSize 64
 #define MaxListSize   128
+#define MaxDNSSize    512
 
 static struct {
     double avgTput;
     int listSize;
     int list[MaxListSize];
     int minRate;
+
+    char encodedHost[MaxListSize];
+    char dns[MaxDNSSize];
 } local;
 
 static void init() {
     local.avgTput = 0.0;
     local.listSize = 0;
     local.minRate = 0;
+
+    char *str = local.encodedHost;
+    for (;;) {
+        char *now = (char *)config.backendHost;
+        char *next = strchr(now, '.');
+        if (!next) {
+            break;
+        }
+
+        int size = next - now;
+        *str++ = size;
+        memcpy(str, now, size);
+        now = next + 1;
+    }
+    *str = 0;
 }
 
 static const char *itoaImp(int x) {
@@ -75,6 +96,13 @@ static int findBitrate() {
         }
     }
     return best;
+}
+
+static void queryDNS() {
+    Socket *sock = io.socket(SOCK_DGRAM, &config.local);
+
+    int size = 0;
+
 }
 
 struct Util util = {
