@@ -195,7 +195,7 @@ static void writeHandler(Socket *s, Conn *c) {
     // parse request
     if (c->state == StateRequest) {
         char *req = BufferHead(c->proxyBuf);
-        logv("request all: %s", req);
+        logv("request full: %s", req);
         char *line = strstr(req, "\r\n");
         *line = 0;
 
@@ -219,8 +219,10 @@ static void writeHandler(Socket *s, Conn *c) {
             if (!next) break;
             line = next + 2;
         }
+        logv("forward request full: %s", c->buf0.data);
         buffer.append(&c->buf0, "\r\n");
         if (c->state == StateList) {
+            logv("list request full: %s", c->buf1.data);
             buffer.append(&c->buf1, "\r\n");
         }
     }
