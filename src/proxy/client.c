@@ -96,7 +96,7 @@ static void listHandler(Socket *s, Conn *c) {
     }
 
     if (!n) {
-        logv("list finish");
+        logv("list finish: %s", c->buf1.data);
         util.parseList(c->buf1.data);
 
         io.close(s);
