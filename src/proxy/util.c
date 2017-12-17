@@ -69,7 +69,7 @@ static int findBitrate() {
     int i;
     int best = local.minRate;
     for (i = 0; i < local.listSize; ++i) {
-        int rate = local.list[local.listSize];
+        int rate = local.list[i];
         if (rate <= local.avgTput / 1.5 && rate > best) {
             best = rate;
         }
