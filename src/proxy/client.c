@@ -66,14 +66,16 @@ static void forwardHandler(Socket *s, Conn *c) {
         c->state = StateEof;
         io.block(s, IOWaitRead);
 
-        clock_gettime(CLOCK_REALTIME, &c->end);
-        double dur = util.interval(&c->begin, &c->end);
-        double tput = util.recordTput(c->chunkSize, dur);
-        double estTput = util.estimateTput();
+        if (c->bitrate) {
+            clock_gettime(CLOCK_REALTIME, &c->end);
+            double dur = util.interval(&c->begin, &c->end);
+            double tput = util.recordTput(c->chunkSize, dur);
+            double estTput = util.estimateTput();
 
-        fprintf(config.logging, "%ld %.3lf %.0lf %.0lf %d %s %s\n",
-                c->begin.tv_sec, dur, tput, estTput, c->bitrate,
-                inet_ntoa(c->peer.sin_addr), c->chunkName);
+            fprintf(config.logging, "%ld %lf %.0lf %.0lf %d %s %s\n",
+                    c->begin.tv_sec, dur, tput, estTput, c->bitrate,
+                    inet_ntoa(c->peer.sin_addr), c->chunkName);
+        }
     }
 
     c->chunkSize += n;
@@ -82,10 +84,6 @@ static void forwardHandler(Socket *s, Conn *c) {
         io.block(s, IOWaitRead);
     }
     io.wait(c->proxy, IOWaitWrite);
-}
-
-static void parseList(char *str) {
-    // TODO : get list of bitrate
 }
 
 static void listHandler(Socket *s, Conn *c) {
@@ -99,7 +97,7 @@ static void listHandler(Socket *s, Conn *c) {
 
     if (!n) {
         logv("list finish");
-        parseList(c->buf1.data);
+        util.parseList(c->buf1.data);
 
         io.close(s);
         connectSocket(c);
@@ -289,6 +287,7 @@ static void createClient(Socket *s, Chunk *buf) {
     c->proxyBuf = buf;
     c->peer.sin_family = AF_INET;
     c->peer.sin_port = config.backendPort;
+    c->bitrate = 0;
 
     if (config.backendIP) {
         c->peer.sin_addr.s_addr = config.backendIP;

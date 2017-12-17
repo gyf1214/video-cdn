@@ -2,13 +2,17 @@
 #include "config.h"
 
 #define MaxNumberSize 64
+#define MaxListSize   128
 
 static struct {
     double avgTput;
+    int listSize;
+    int list[MaxListSize];
 } local;
 
 static void init() {
     local.avgTput = 0.0;
+    local.listSize = 0;
 }
 
 static const char *itoaImp(int x) {
@@ -35,6 +39,29 @@ static double estimateTput() {
     return local.avgTput;
 }
 
+static void parseList(char *str) {
+    const char *pattern = "bitrate=\"";
+    int patLen = strlen(pattern);
+    local.listSize = 0;
+
+    for (;;) {
+        str = strstr(str, pattern);
+        if (!str) break;
+
+        str += patLen;
+        char *end = strchr(str, '\"');
+        *end = 0;
+
+        int rate = atoi(str);
+        logv("get bitrate: %d", rate);
+        local.list[local.listSize++] = rate;
+
+        str = end + 1;
+    }
+}
+
 struct Util util = {
-    init, itoaImp, timeInterval, recordTput, estimateTput
+    init, itoaImp, timeInterval,
+    recordTput, estimateTput,
+    parseList,
 };
