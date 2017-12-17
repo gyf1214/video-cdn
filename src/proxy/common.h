@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 #include <netdb.h>
 #include <sys/select.h>
 #include <fcntl.h>

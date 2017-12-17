@@ -1,6 +1,7 @@
 #include "client.h"
 #include "server.h"
 #include "config.h"
+#include "util.h"
 
 #define StateDNS      1
 #define StateRequest  2
@@ -10,7 +11,7 @@
 #define StateError    -1
 
 #define IgnoreSize    3
-#define MaxRateSize   100
+#define MaxNameSize   64
 
 static const char *ignoreHeaders[IgnoreSize] = {
     "Host", "Proxy-Connection", "Connection"
@@ -26,6 +27,10 @@ typedef struct {
     Socket *proxy;
     Chunk *proxyBuf;
     int state;
+    int chunkSize;
+    struct timespec begin, end;
+    char chunkName[MaxNameSize];
+    int bitrate;
 } Conn;
 
 static void connHandler(Socket *s, int flag);
@@ -60,8 +65,18 @@ static void forwardHandler(Socket *s, Conn *c) {
         logv("forward read eof");
         c->state = StateEof;
         io.block(s, IOWaitRead);
+
+        clock_gettime(CLOCK_REALTIME, &c->end);
+        double dur = util.interval(&c->begin, &c->end);
+        double tput = util.recordTput(c->chunkSize, dur);
+        double estTput = util.estimateTput();
+
+        fprintf(config.logging, "%ld %.3lf %.0lf %.0lf %d %s %s\n",
+                c->begin.tv_sec, dur, tput, estTput, c->bitrate,
+                inet_ntoa(c->peer.sin_addr), c->chunkName);
     }
 
+    c->chunkSize += n;
     if (BufferFull(&c->buf0)) {
         logv("forward buffer full");
         io.block(s, IOWaitRead);
@@ -121,9 +136,13 @@ static int parseRequest(char *str, Conn *c) {
         *end = 0;
         buffer.append(&c->buf0, uri);
         buffer.append(&c->buf0, "/");
+
+        char *name = BufferTail(&c->buf0);
         // TODO : modify this
-        buffer.append(&c->buf0, "500");
+        c->bitrate = 500;
+        buffer.append(&c->buf0, util.itoa(c->bitrate));
         buffer.append(&c->buf0, seg);
+        strncpy(c->chunkName, name, MaxNameSize);
 
         c->state = StateForward;
     } else if (f4m) {
@@ -238,6 +257,9 @@ static void writeHandler(Socket *s, Conn *c) {
         if (tryFlush(s, &c->buf0)) {
             logv("finish forward request");
             server.link(c->proxy, s, &c->buf0);
+
+            clock_gettime(CLOCK_REALTIME, &c->begin);
+            c->chunkSize = 0;
         }
     }
 }
