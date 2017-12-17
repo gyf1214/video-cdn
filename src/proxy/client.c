@@ -144,6 +144,7 @@ static int parseRequest(char *str, Conn *c) {
 
         c->state = StateForward;
     } else if (f4m) {
+        buffer.append(&c->buf1, method);
         buffer.append(&c->buf1, uri);
         buffer.append(&c->buf1, " ");
         buffer.append(&c->buf1, version);
