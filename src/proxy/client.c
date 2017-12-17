@@ -205,18 +205,19 @@ static void writeHandler(Socket *s, Conn *c) {
             return;
         }
 
+        line += 2;
         for (;;) {
-            line += 2;
+            char *next = strstr(line, "\r\n");
+            if (next) *next = 0;
+
             if (!parseHeader(line, c)) {
                 server.release(c->proxy);
                 release(s);
                 return;
             }
-            line = strstr(line, "\r\n");
-            if (!line) {
-                break;
-            }
-            *line = 0;
+
+            if (!next) break;
+            line = next + 2;
         }
         buffer.append(&c->buf0, "\r\n");
         if (c->state == StateList) {
