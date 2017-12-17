@@ -8,11 +8,13 @@ static struct {
     double avgTput;
     int listSize;
     int list[MaxListSize];
+    int minRate;
 } local;
 
 static void init() {
     local.avgTput = 0.0;
     local.listSize = 0;
+    local.minRate = 0;
 }
 
 static const char *itoaImp(int x) {
@@ -55,13 +57,28 @@ static void parseList(char *str) {
         int rate = atoi(str);
         logv("get bitrate: %d", rate);
         local.list[local.listSize++] = rate;
+        if (!local.minRate || local.minRate > rate) {
+            local.minRate = rate;
+        }
 
         str = end + 1;
     }
 }
 
+static int findBitrate() {
+    int i;
+    int best = local.minRate;
+    for (i = 0; i < local.listSize; ++i) {
+        int rate = local.list[local.listSize];
+        if (rate <= local.avgTput / 1.5 && rate > best) {
+            best = rate;
+        }
+    }
+    return best;
+}
+
 struct Util util = {
     init, itoaImp, timeInterval,
     recordTput, estimateTput,
-    parseList,
+    parseList, findBitrate
 };

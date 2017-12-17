@@ -96,7 +96,7 @@ static void listHandler(Socket *s, Conn *c) {
     }
 
     if (!n) {
-        logv("list finish: %s", c->buf1.data);
+        logv("list response finish");
         util.parseList(c->buf1.data);
 
         io.close(s);
@@ -136,8 +136,7 @@ static int parseRequest(char *str, Conn *c) {
         buffer.append(&c->buf0, "/");
 
         char *name = BufferTail(&c->buf0);
-        // TODO : modify this
-        c->bitrate = 500;
+        c->bitrate = util.findBitrate();
         buffer.append(&c->buf0, util.itoa(c->bitrate));
         buffer.append(&c->buf0, seg);
         strncpy(c->chunkName, name, MaxNameSize);

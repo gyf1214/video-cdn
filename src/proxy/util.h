@@ -12,6 +12,7 @@ extern struct Util {
     double (*estimateTput)(void);
 
     void (*parseList)(char *);
+    int (*findBitrate)(void);
 } util;
 
 #endif
