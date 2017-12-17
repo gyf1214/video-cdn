@@ -14,7 +14,7 @@ $proxy1 2> log/1-1-v.log&
 $proxy2 2> log/1-2-v.log&
 
 echo "wait for start video..."
-# sleep $margin
+sleep $margin
 
 echo "run netsim..."
 pushd netsim
