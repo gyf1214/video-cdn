@@ -4,7 +4,7 @@ TARPATH = bin
 LOGPATH = log
 
 CC = gcc
-CFLAGS = -Wall -g -DDEBUG
+CFLAGS = -Wall -g
 LDFLAGS = -lm
 
 PROXY = proxy
@@ -18,6 +18,8 @@ all: $(TARPROXY)
 clean:
 	rm -fr $(OBJPATH) $(TARPATH)
 
+rebuild: clean all
+
 $(TARPROXY) : $(OBJPROXY)
 	mkdir -p $(dir $@)
 	$(CC) $(LDFLAGS) -o $@ $^
@@ -25,3 +27,5 @@ $(TARPROXY) : $(OBJPROXY)
 $(OBJPATH)/%.o : $(SRCPATH)/%.c makefile
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
+
+.PHONY: all clean rebuild
