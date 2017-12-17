@@ -195,6 +195,7 @@ static void writeHandler(Socket *s, Conn *c) {
     // parse request
     if (c->state == StateRequest) {
         char *req = BufferHead(c->proxyBuf);
+        logv("request all: %s", req);
         char *line = strstr(req, "\r\n");
         *line = 0;
 
