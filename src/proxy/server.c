@@ -54,6 +54,8 @@ static void writeHandler(Socket *s, Conn *c) {
 
     char *data = BufferHead(c->proxyBuf);
     int len = BufferLen(c->proxyBuf);
+    int len0 = BufferMaxSize - c->proxyBuf->head;
+    len = min(len, len0);
 
     int n = write(s->fd, data, len);
     // reset on fail
