@@ -37,7 +37,7 @@ for i,lf in enumerate(lfs):
             # already have an entry at this second
             continue
         BRs[t].append((i,int(float(br))))
-
+        
         dur = float(dur)
         t_new = float(t_new)
         while dur > 1:
@@ -65,7 +65,7 @@ for (t,l) in BR_list:
     for (n,b) in l:
         if n not in start:
             start[n] = t
-        end[n] = t
+        end[n] = t            
 
 BR_y = []
 for i in xrange(max(end.values())+1):
@@ -108,7 +108,7 @@ for i in xrange(max(end.values())+1):
 
 fair = []
 for i, (x,y) in enumerate(BR_y):
-    if i < start[0] or i < start[1]:
+    if i < start[0] or i < start[1]: 
         fair.append(1)
     else:
         fair.append(fairness(x,y))
@@ -160,7 +160,7 @@ for i in range(0,3):
     font = { 'size' : 22}
     plt.rc('font', **font)
     params = {'legend.fontsize': 20,
-              # 'legend.linewidth': 2,
+              'legend.linewidth': 2,
               'xtick.major.size': 7,
               'xtick.major.width': 3,
               'ytick.major.size': 7,
@@ -177,7 +177,7 @@ for i in range(0,3):
     ax.set_xlabel(xlabels[i])
     ax.set_ylabel(ylabels[i])
     for q, pt in enumerate(data[i]):
-        lines.append(plt.plot(pt, color=colors[q],
+        lines.append(plt.plot(pt, color=colors[q], 
                               linewidth=width[q], linestyle=style[q], label=labels[q]))
     y = ax.get_ylim()
     for l in start.values():
@@ -195,7 +195,7 @@ for i in range(0,3):
         ymin[i] = y[0]
     x = ax.get_xlim()
     ax.axis([x[0],x[1],ymin[i],ymax[i]])
-    plt.subplots_adjust(top=0.95)
-    plt.subplots_adjust(bottom=0.15)
+    plt.subplots_adjust(top=0.95) 
+    plt.subplots_adjust(bottom=0.15) 
     #plt.show()
     plt.savefig(outputs[i])
