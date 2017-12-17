@@ -193,17 +193,17 @@ static int tryFlush(Socket *s, Chunk *buf) {
 static void writeHandler(Socket *s, Conn *c) {
     // parse request
     if (c->state == StateRequest) {
-        char *req = strtok(BufferHead(c->proxyBuf), "\r\n");
-        char *head = strtok(NULL, "");
+        char *req = BufferHead(c->proxyBuf);
+        char *line = strstr(req, "\r\n");
 
-        if (!req || !parseRequest(req, c)) {
+        if (!line || !parseRequest(req, c)) {
             server.release(c->proxy);
             release(s);
             return;
         }
 
-        char *line = strtok(head, "\r\n");
-        for (; line; line = strtok(NULL, "\r\n")) {
+        for (; line; line = strstr(line, "\r\n")) {
+            line += 2;
             if (!parseHeader(line, c)) {
                 server.release(c->proxy);
                 release(s);
