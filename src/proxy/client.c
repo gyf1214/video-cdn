@@ -120,6 +120,7 @@ static int parseRequest(char *str, Conn *c) {
         if (!end) return 0;
         *end = 0;
         buffer.append(&c->buf0, uri);
+        buffer.append(&c->buf0, "/");
         // TODO : modify this
         buffer.append(&c->buf0, "500");
         buffer.append(&c->buf0, seg);
