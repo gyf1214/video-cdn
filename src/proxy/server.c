@@ -69,6 +69,7 @@ static void writeHandler(Socket *s, Conn *c) {
         logv("forward buffer empty");
         io.block(s, IOWaitWrite);
     }
+    io.wait(c->proxy, IOWaitRead);
 }
 
 static void connHandler(Socket *s, int flag) {
