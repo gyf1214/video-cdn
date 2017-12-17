@@ -44,7 +44,7 @@ static void readHandler(Socket *s, Conn *c) {
 }
 
 static void writeHandler(Socket *s, Conn *c) {
-    if (client.eof(s) && BufferEmpty(c->proxyBuf)) {
+    if (client.eof(c->proxy) && BufferEmpty(c->proxyBuf)) {
         // client eof && buffer empty -> connection finish
         logv("connection finish");
         // TODO : calculate bitrate
@@ -65,7 +65,7 @@ static void writeHandler(Socket *s, Conn *c) {
 
     buffer.consume(c->proxyBuf, n);
     // if chunk empty, clear write wait
-    if (BufferEmpty(c->proxyBuf) && !client.eof(s)) {
+    if (BufferEmpty(c->proxyBuf) && !client.eof(c->proxy)) {
         logv("forward buffer empty");
         io.block(s, IOWaitWrite);
     }
