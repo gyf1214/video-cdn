@@ -152,7 +152,8 @@ static int parseHeader(char *str, Conn *c) {
     char *field = strtok(str, ": ");
     if (!field) return 0;
 
-    for (int i = 0; i < IgnoreSize; ++i) {
+    int i;
+    for (i = 0; i < IgnoreSize; ++i) {
         if (!strcmp(field, ignoreHeaders[i])) {
             logv("ignore header: %s", field);
             return 1;
