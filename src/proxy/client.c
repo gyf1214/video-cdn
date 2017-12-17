@@ -2,30 +2,33 @@
 #include "server.h"
 #include "config.h"
 
-#define StateRequest  1
-#define StateHeader   2
-#define StateBody     3
-#define StateEof      4
+#define StateDNS      1
+#define StateRequest  2
+#define StateList     3
+#define StateForward  4
+#define StateEof      5
 #define StateError    -1
 
 #define IgnoreSize    3
+#define MaxRateSize   100
 
-const char *ignoreHeaders[IgnoreSize] = {
+static const char *ignoreHeaders[IgnoreSize] = {
     "Host", "Proxy-Connection", "Connection"
 };
 
-const char *defaultHeaders =
-    "Host: " ConfigHost "\r\n"
-    "Connection: close\r\n";
+static const char *defaultHeaders =
+    "\r\nHost: " ConfigHost
+    "\r\nConnection: close\r\n";
 
 typedef struct {
     struct sockaddr_in peer;
-    Chunk buf;
-    Chunk out;
+    Chunk buf0, buf1;
     Socket *proxy;
     Chunk *proxyBuf;
     int state;
 } Conn;
+
+static void connHandler(Socket *s, int flag);
 
 static void release(Socket *s) {
     Conn *c = (Conn *)s->data;
@@ -34,140 +37,193 @@ static void release(Socket *s) {
     free(c);
 }
 
-static void readHandler(Socket *s, Conn *c) {
-    int n = buffer.fill(&c->buf);
+static Socket *connectSocket(Conn *c) {
+    Socket *cs = io.socket(SOCK_STREAM, &config.local);
+    cs->data = c;
+    cs->callback = connHandler;
+
+    io.connect(cs, &c->peer);
+    io.wait(cs, IOWaitWrite);
+    logv("connect %s:%hu with %d", inet_ntoa(c->peer.sin_addr),
+        ntohs(c->peer.sin_port), cs->fd);
+    return cs;
+}
+
+static void forwardHandler(Socket *s, Conn *c) {
+    int n = buffer.fill(&c->buf0);
     if (n < 0) {
-        logv("read from proxy %d failed", s->fd);
+        logv("forward read error");
         server.release(c->proxy);
         return;
-    } else if (!n) {
-        logv("proxy %d finish", s->fd);
-        io.block(s, IOWaitRead);
-        // n == 0 indicates peer close
-        // set eof
+    }
+    if (!n) {
         c->state = StateEof;
-    } else if (BufferFull(&c->buf)) {
+        io.block(s, IOWaitRead);
+    }
+
+    if (BufferFull(&c->buf0)) {
+        logv("forward buffer full");
         io.block(s, IOWaitRead);
     }
     io.wait(c->proxy, IOWaitWrite);
 }
 
-static int parseRequest(Chunk *c, Chunk *o, int *stop) {
-    int len = buffer.readline(c);
-    if (len < 0) {
-        *stop = 1;
-        return StateRequest;
-    }
-
-    int src = 0;
-    char ch;
-
-    // 1. method
-    while (src < len && (ch = BufferChar(c, src)) != ' ') {
-        BufferAppend(o, ch);
-        ++src;
-    }
-    if (src >= len) return StateError;
-    BufferAppend(o, ' ');
-    ++src;
-
-    // 2. uri
-    // ignore continuous '//'
-    // find first '/'
-    while (src < len && BufferChar(c, src) != ' ' &&
-          (BufferChar(c, src) != '/' || BufferChar(c, src - 1) == '/' ||
-           BufferChar(c, src + 1) == '/')) {
-        ++src;
-    }
-    if (src >= len) return StateError;
-
-    if (BufferChar(c, src) == ' ') {
-        BufferAppend(o, '/');
-    }
-    while (src < len && (ch = BufferChar(c, src)) != ' ') {
-        BufferAppend(o, ch);
-        ++src;
-    }
-    BufferAppend(o, ' ');
-    ++src;
-
-    // 3. protocol
-    while (src < len) {
-        BufferAppend(o, BufferChar(c, src++));
-    }
-
-    o->data[o->tail] = 0;
-    logv("proxy request: %s", o->data);
-    buffer.append(o, "\r\n");
-    buffer.consumeEOL(c);
-
-    return StateHeader;
+static void parseList(char *str) {
+    // TODO : get list of bitrate
 }
 
-static int parseHeader(Chunk *c, Chunk *o, int *stop) {
-    int len = buffer.readline(c);
-    if (len < 0) {
-        *stop = 1;
-        return StateHeader;
+static void listHandler(Socket *s, Conn *c) {
+    int n = buffer.fill(&c->buf1);
+    if (n < 0 || BufferFull(&c->buf1)) {
+        logv("list read error");
+        server.release(c->proxy);
+        release(s);
+        return;
     }
 
-    int ret = 0;
-    if (!len) {
-        ret = StateBody;
+    if (!n) {
+        logv("list finish");
+        parseList(c->buf1.data);
+
+        io.close(s);
+        connectSocket(c);
+
+        c->state = StateForward;
+    }
+}
+
+static int parseRequest(char *str, Conn *c) {
+    char *method = strtok(str, " ");
+    char *uri = strtok(NULL, " ");
+    char *version = strtok(NULL, " ");
+    if (!version) return 0;
+
+    // get uri from url
+    char *uri0 = strstr(uri, "://");
+    if (uri0) {
+        uri = uri0 + strlen("://");
+    }
+    uri += strcspn(uri, "/");
+    if (!*uri) return 0;
+    logv("request uri: %s", uri);
+
+    buffer.append(&c->buf0, method);
+    buffer.append(&c->buf0, " ");
+
+    // rewrite
+    char *seg = strstr(uri, "Seg");
+    char *f4m = strstr(uri, ".f4m");
+
+    if (seg) {
+        char *end = strrchr(uri, '/');
+        if (!end) return 0;
+        *end = 0;
+        buffer.append(&c->buf0, uri);
+        // TODO : modify this
+        buffer.append(&c->buf0, "500");
+        buffer.append(&c->buf0, seg);
+
+        c->state = StateForward;
+    } else if (f4m) {
+        buffer.append(&c->buf1, uri);
+        buffer.append(&c->buf1, " ");
+        buffer.append(&c->buf1, version);
+        logv("list request: %s", c->buf1.data);
+        buffer.append(&c->buf1, defaultHeaders);
+
+        *f4m = 0;
+        buffer.append(&c->buf0, uri);
+        buffer.append(&c->buf0, "_nolist.f4m");
+
+        c->state = StateList;
     } else {
-        static char buf[BufferMaxSize];
-        char *tmp = buf;
-        char ch;
-        int i;
+        buffer.append(&c->buf0, uri);
+        c->state = StateForward;
+    }
+    buffer.append(&c->buf0, " ");
+    buffer.append(&c->buf0, version);
+    logv("forward request: %s", c->buf0.data);
+    buffer.append(&c->buf0, defaultHeaders);
 
-        int src = 0;
-        while (src < len && (ch = BufferChar(c, src)) != ':') {
-            ++src;
-            *tmp++ = ch;
-        }
-        if (src >= len) return StateError;
-        *tmp++ = 0;
+    return 1;
+}
 
-        for (i = 0; i < IgnoreSize; ++i) {
-            if (!strcmp(tmp, ignoreHeaders[i])) {
-                logv("ignore header %s", buf);
-                ret = StateHeader;
-            }
-        }
+static int parseHeader(char *str, Conn *c) {
+    char *field = strtok(str, ": ");
+    if (!field) return 0;
 
-        if (!ret) {
-            logv("pass header %s", buf);
-
-            buffer.append(o, buf);
-            buffer.append(o, ": ");
-            while (src < len) {
-                BufferAppend(o, BufferChar(c, src));
-                ++src;
-            }
-            ret = StateHeader;
+    for (int i = 0; i < IgnoreSize; ++i) {
+        if (!strcmp(field, ignoreHeaders[i])) {
+            logv("ignore header: %s", field);
+            return 1;
         }
     }
 
-    buffer.append(o, "\r\n");
-    buffer.consumeEOL(c);
+    char *line = BufferTail(&c->buf0);
+    buffer.append(&c->buf0, field);
+    buffer.append(&c->buf0, ": ");
+    char *val = strtok(NULL, "");
+    if (val) {
+        buffer.append(&c->buf0, val);
+    }
+    buffer.append(&c->buf0, "\r\n");
 
-    return ret;
+    logv("forward header: %s", field);
+    if (c->state == StateList) {
+        buffer.append(&c->buf1, line);
+    }
+
+    return 1;
+}
+
+static int tryFlush(Socket *s, Chunk *buf) {
+    if (!BufferEmpty(buf)) {
+        buffer.write(buf);
+        return 0;
+    } else {
+        io.block(s, IOWaitWrite);
+
+        buffer.init(buf, s->fd);
+        io.wait(s, IOWaitRead);
+        return 1;
+    }
 }
 
 static void writeHandler(Socket *s, Conn *c) {
-    int stop = 0;
+    // parse request
+    if (c->state == StateRequest) {
+        char *req = strtok(BufferHead(c->proxyBuf), "\r\n");
 
-    while (!stop) {
-        switch (c->state) {
-            case StateRequest:
-            c->state = parseRequest(c->proxyBuf, &c->out, &stop);
-            break;
-            case StateHeader:
-            c->state = parseHeader(c->proxyBuf, &c->out, &stop);
-            default:
-            logv("error parse request");
+        if (!req || !parseRequest(req, c)) {
             server.release(c->proxy);
+            release(s);
             return;
+        }
+
+        char *line = strtok(NULL, "\r\n");
+        for (; line; line = strtok(NULL, "\r\n")) {
+            if (!parseHeader(line, c)) {
+                server.release(c->proxy);
+                release(s);
+                return;
+            }
+        }
+        buffer.append(&c->buf0, "\r\n");
+        if (c->state == StateList) {
+            buffer.append(&c->buf1, "\r\n");
+        }
+    }
+
+    if (c->state == StateList) {
+        // request original .f4m list
+        if (tryFlush(s, &c->buf1)) {
+            logv("finish list request");
+        }
+    } else if (c->state == StateForward) {
+        // forward response from remote
+        if (tryFlush(s, &c->buf0)) {
+            logv("finish forward request");
+            server.link(c->proxy, s, &c->buf0);
         }
     }
 }
@@ -176,36 +232,35 @@ static void connHandler(Socket *s, int flag) {
     Conn *c = (Conn *)s->data;
     if (flag & IOWaitRead) {
         logv("handle proxy read %d", s->fd);
-        readHandler(s, c);
+        if (c->state == StateList) {
+            logv("response from list");
+            listHandler(s, c);
+        } else if (c->state == StateForward) {
+            logv("response from forward");
+            forwardHandler(s, c);
+        } else {
+            logv("response from unknown state");
+        }
     } else if (flag & IOWaitWrite) {
         logv("handle proxy write %d", s->fd);
         writeHandler(s, c);
     }
 }
 
-static Socket *createClient(Socket *s, Chunk *buf, const struct sockaddr_in *addr) {
-    Socket *cs = io.socket(SOCK_STREAM, &config.local);
-
+static void createClient(Socket *s, Chunk *buf) {
     Conn *c = malloc(sizeof(Conn));
-    c->peer = *addr;
-    buffer.init(&c->buf, cs->fd);
-    buffer.init(&c->out, cs->fd);
     c->proxy = s;
     c->proxyBuf = buf;
-    c->state = StateRequest;
+    c->peer.sin_family = AF_INET;
+    c->peer.sin_port = config.backendPort;
 
-    cs->data = c;
-    cs->callback = connHandler;
-
-    io.connect(cs, addr);
-    logv("connect %s:%hu with %d", inet_ntoa(addr->sin_addr),
-        ntohs(addr->sin_port), cs->fd);
-    return cs;
-}
-
-static Chunk *getBuffer(Socket *s) {
-    Conn *c = (Conn *)s->data;
-    return c->proxyBuf;
+    if (config.backendIP) {
+        c->peer.sin_addr.s_addr = config.backendIP;
+        c->state = StateRequest;
+        Socket *cs = connectSocket(c);
+        buffer.init(&c->buf0, cs->fd);
+        buffer.init(&c->buf1, cs->fd);
+    }
 }
 
 static int getEof(Socket *s) {
@@ -214,6 +269,5 @@ static int getEof(Socket *s) {
 }
 
 struct Client client = {
-    createClient, getBuffer,
-    release, getEof
+    createClient, release, getEof
 };

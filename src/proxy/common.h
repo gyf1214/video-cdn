@@ -21,4 +21,7 @@
 #define __at           "[" __FILE__ ":" __tostring(__LINE__) "]"
 #define logv(fmt, ...) fprintf(stderr, "%-30s" fmt "\n", __at, ##__VA_ARGS__)
 
+#define min(x, y)      ((x) < (y) ? (x) : (y))
+#define max(x, y)      ((x) > (y) ? (x) : (y))
+
 #endif

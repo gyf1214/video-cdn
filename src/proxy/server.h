@@ -13,6 +13,9 @@ extern struct Server {
 
     // kill connection
     void (*release)(Socket *);
+
+    // link with forward socket
+    void (*link)(Socket *, Socket *, Chunk *);
 } server;
 
 #endif

@@ -6,9 +6,7 @@
 #include "buffer.h"
 
 extern struct Client {
-    Socket *(*createClient)(Socket *, Chunk *, const struct sockaddr_in *);
-
-    Chunk *(*getBuffer)(Socket *);
+    void (*createClient)(Socket *, Chunk *);
 
     void (*release)(Socket *);
 

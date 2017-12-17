@@ -135,6 +135,7 @@ static void loop() {
             int i;
             for (i = 0; i < local.nfds; ++i) {
                 Socket *sock = local.sock[i];
+                if (!sock) continue;
                 if (FD_ISSET(i, &local.selectRead)) {
                     logv("read signal from %d", i);
                     sock->callback(sock, IOWaitRead);
