@@ -1,8 +1,8 @@
 #!/bin/bash
 
 margin=10
-proxy1="bin/proxy log/1-1.log $1 8888 1.0.0.1 5.0.0.1 5353 3.0.0.1 2> log/1-1-v.log &"
-proxy2="bin/proxy log/1-2.log $1 8889 2.0.0.1 5.0.0.1 5353 4.0.0.1 2> log/1-2-v.log &"
+proxy1="bin/proxy log/1-1.log $1 8888 1.0.0.1 5.0.0.1 5353 3.0.0.1"
+proxy2="bin/proxy log/1-2.log $1 8889 2.0.0.1 5.0.0.1 5353 4.0.0.1"
 
 echo "start netsim"
 pushd netsim
@@ -10,8 +10,8 @@ pushd netsim
 popd
 
 echo "start proxy..."
-$proxy1
-$proxy2
+$proxy1 2> log/1-1-v.log&
+$proxy2 2> log/1-2-v.log&
 
 echo "wait for start video..."
 sleep $margin
