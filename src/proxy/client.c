@@ -57,6 +57,7 @@ static void forwardHandler(Socket *s, Conn *c) {
         return;
     }
     if (!n) {
+        logv("forward read eof");
         c->state = StateEof;
         io.block(s, IOWaitRead);
     }
