@@ -47,7 +47,6 @@ static void writeHandler(Socket *s, Conn *c) {
     if (client.eof(c->proxy) && BufferEmpty(c->proxyBuf)) {
         // client eof && buffer empty -> connection finish
         logv("connection finish");
-        // TODO : calculate bitrate
         release(s);
         return;
     }
@@ -71,7 +70,9 @@ static void writeHandler(Socket *s, Conn *c) {
         logv("forward buffer empty");
         io.block(s, IOWaitWrite);
     }
-    io.wait(c->proxy, IOWaitRead);
+    if (!client.eof(c->proxy)) {
+        io.wait(c->proxy, IOWaitRead);
+    }
 }
 
 static void connHandler(Socket *s, int flag) {
