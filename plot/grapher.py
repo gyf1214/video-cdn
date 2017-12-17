@@ -190,7 +190,8 @@ for i in range(0,3):
 
     if i == 2:
         handles, labels = ax.get_legend_handles_labels()
-        ax.legend(reversed(handles), reversed(labels), 'lower right')
+        # ax.legend(reversed(handles), reversed(labels), 'lower right')
+        ax.legend(reversed(handles), reversed(labels))
         ymax[i] = y[1]
         ymin[i] = y[0]
     x = ax.get_xlim()
