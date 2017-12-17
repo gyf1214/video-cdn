@@ -11,7 +11,7 @@ typedef struct Chunk {
     // consume = 0, fill = 1
 } Chunk;
 
-#define BufferFull(c)      (((c)->head + 1) % BufferMaxSize == (c)->tail)
+#define BufferFull(c)      (((c)->tail + 1) % BufferMaxSize == (c)->head)
 #define BufferEmpty(c)     ((c)->head == (c)->tail)
 #define BufferHead(c)      (&(c)->data[(c)->head])
 #define BufferTail(c)      (&(c)->data[(c)->tail])
