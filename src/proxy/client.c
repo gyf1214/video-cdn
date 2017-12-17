@@ -204,7 +204,7 @@ static void writeHandler(Socket *s, Conn *c) {
             return;
         }
 
-        while (line) {
+        for (;;) {
             line += 2;
             if (!parseHeader(line, c)) {
                 server.release(c->proxy);
@@ -212,6 +212,9 @@ static void writeHandler(Socket *s, Conn *c) {
                 return;
             }
             line = strstr(line, "\r\n");
+            if (!line) {
+                break;
+            }
             *line = 0;
         }
         buffer.append(&c->buf0, "\r\n");
