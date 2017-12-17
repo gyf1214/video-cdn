@@ -17,8 +17,8 @@
 #ifdef NDEBUG
 #undef assert
 #define assert(x)  ((void)(x))
-#define success(c) ((void)(x))
-#define logv(...)  ((void)(0, ##__VA_ARGS__))
+#define success(x) ((void)(x))
+#define logv(...)  ((void)0)
 #else
 #define success(x) assert((x) >= 0)
 #define __stringify(x) #x
