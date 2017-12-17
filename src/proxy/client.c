@@ -194,6 +194,7 @@ static void writeHandler(Socket *s, Conn *c) {
     // parse request
     if (c->state == StateRequest) {
         char *req = strtok(BufferHead(c->proxyBuf), "\r\n");
+        char *head = strtok(NULL, "");
 
         if (!req || !parseRequest(req, c)) {
             server.release(c->proxy);
@@ -201,7 +202,7 @@ static void writeHandler(Socket *s, Conn *c) {
             return;
         }
 
-        char *line = strtok(NULL, "\r\n");
+        char *line = strtok(head, "\r\n");
         for (; line; line = strtok(NULL, "\r\n")) {
             if (!parseHeader(line, c)) {
                 server.release(c->proxy);
