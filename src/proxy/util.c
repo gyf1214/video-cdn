@@ -98,12 +98,12 @@ static int findBitrate() {
     return best;
 }
 
-static void queryDNS() {
-    Socket *sock = io.socket(SOCK_DGRAM, &config.local);
-
-    int size = 0;
-
-}
+// static void queryDNS() {
+//     Socket *sock = io.socket(SOCK_DGRAM, &config.local);
+//
+//     int size = 0;
+//
+// }
 
 struct Util util = {
     init, itoaImp, timeInterval,
