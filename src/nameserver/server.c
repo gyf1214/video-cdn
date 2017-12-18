@@ -1,12 +1,10 @@
 #include "server.h"
 #include "util.h"
 
-#define BufferSize 512
-
 static struct {
     int fd;
     struct sockaddr_in peer;
-    char buf[BufferSize];
+    char buf[MaxDNSSize];
     DNSResponse resp;
     DNSError err;
     int stop;
@@ -40,7 +38,7 @@ static void create(struct sockaddr_in *listen) {
 static void loop() {
     while (1) {
         socklen_t len = sizeof(struct sockaddr_in);
-        recvfrom(local.fd, local.buf, BufferSize, 0,
+        recvfrom(local.fd, local.buf, MaxDNSSize, 0,
                  (struct sockaddr *)&local.peer, &len);
 
         if (local.stop) break;

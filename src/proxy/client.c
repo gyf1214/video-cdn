@@ -21,6 +21,8 @@ static const char *defaultHeaders =
     "\r\nHost: " BackendHost
     "\r\nConnection: close\r\n";
 
+static char dnsBuf[MaxDNSSize];
+
 typedef struct {
     struct sockaddr_in peer;
     Chunk buf0, buf1;
@@ -263,11 +265,40 @@ static void writeHandler(Socket *s, Conn *c) {
     }
 }
 
+static void dnsHandler(Socket *s, Conn *c) {
+    struct sockaddr_in peer;
+    socklen_t len = sizeof(struct sockaddr_in);
+
+    recvfrom(s->fd, dnsBuf, MaxDNSSize, 0,
+             (struct sockaddr *)&peer, &len);
+
+    DNSResponse *resp = (DNSResponse *)dnsBuf;
+
+    if (memcpy(resp->magic, ResponseMagic, ResponseSize)) {
+        logv("dns response error");
+        server.release(c->proxy);
+        release(s);
+        return;
+    }
+    io.close(s);
+
+    c->peer.sin_addr.s_addr = resp->addr;
+    logv("dns response: %s", inet_ntoa(c->peer.sin_addr));
+
+    c->state = StateRequest;
+    Socket *cs = connectSocket(c);
+    buffer.init(&c->buf0, cs->fd);
+    buffer.init(&c->buf1, cs->fd);
+}
+
 static void connHandler(Socket *s, int flag) {
     Conn *c = (Conn *)s->data;
     if (flag & IOWaitRead) {
         logv("handle proxy read %d", s->fd);
-        if (c->state == StateList) {
+        if (c->state == StateDNS) {
+            logv("response from DNS");
+            dnsHandler(s, c);
+        } else if (c->state == StateList) {
             logv("response from list");
             listHandler(s, c);
         } else if (c->state == StateForward) {
@@ -280,6 +311,24 @@ static void connHandler(Socket *s, int flag) {
         logv("handle proxy write %d", s->fd);
         writeHandler(s, c);
     }
+}
+
+static Socket *sendDNS(Conn *c) {
+    Socket *s = io.socket(SOCK_DGRAM, &config.local);
+    s->data = c;
+    s->callback = connHandler;
+
+    DNSRequest req;
+    req.id = rand() % 65536;
+    memcpy(req.magic, QueryMagic, QuerySize);
+    sendto(s->fd, &req, sizeof(DNSRequest), 0,
+           (struct sockaddr *)&config.dns, sizeof(struct sockaddr_in));
+
+    logv("dns request from %d to %s:%hu", s->fd,
+         inet_ntoa(config.dns.sin_addr), ntohs(config.dns.sin_port));
+
+    io.wait(s, IOWaitRead);
+    return s;
 }
 
 static void createClient(Socket *s, Chunk *buf) {
@@ -296,6 +345,9 @@ static void createClient(Socket *s, Chunk *buf) {
         Socket *cs = connectSocket(c);
         buffer.init(&c->buf0, cs->fd);
         buffer.init(&c->buf1, cs->fd);
+    } else {
+        c->state = StateDNS;
+        sendDNS(c);
     }
 }
 

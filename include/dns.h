@@ -20,6 +20,7 @@
                         "\x00\x04"
 #define ErrorSize       10
 #define ErrorMagic      "\x84\x03\x00\x00\x00\x00\x00\x00\x00\x00"
+#define MaxDNSSize      512
 
 #define Packed          __attribute__((__packed__))
 
