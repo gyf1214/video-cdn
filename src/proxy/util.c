@@ -23,8 +23,8 @@ static void init() {
     local.minRate = 0;
 
     char *str = local.encodedHost;
+    char *now = (char *)config.backendHost;
     for (;;) {
-        char *now = (char *)config.backendHost;
         char *next = strchr(now, '.');
         if (!next) {
             break;
