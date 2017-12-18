@@ -1,4 +1,5 @@
 #include "server.h"
+#include "config.h"
 #include "util.h"
 
 static struct {
@@ -59,6 +60,14 @@ static void loop() {
             local.resp.id = req->id;
 
             local.resp.addr = util.resolve(local.peer.sin_addr.s_addr);
+            struct in_addr addr = { local.resp.addr };
+
+            struct timespec now;
+            clock_gettime(CLOCK_REALTIME, &now);
+            fprintf(config.logging, "%ld.%06ld %s %s %s\n",
+                    now.tv_sec, now.tv_nsec / 1000,
+                    inet_ntoa(local.peer.sin_addr),
+                    BackendHost, inet_ntoa(addr));
 
             sendto(local.fd, &local.resp, sizeof(DNSResponse), 0,
                   (struct sockaddr *)&local.peer, len);
