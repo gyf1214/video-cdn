@@ -72,9 +72,9 @@ static void forwardHandler(Socket *s, Conn *c) {
             double tput = util.recordTput(c->chunkSize, dur);
             double estTput = util.estimateTput();
 
-            fprintf(config.logging, "%ld %lf %.0lf %.0lf %d %s %s\n",
-                    c->begin.tv_sec, dur, tput, estTput, c->bitrate,
-                    inet_ntoa(c->peer.sin_addr), c->chunkName);
+            fprintf(config.logging, "%ld.%06ld %lf %.0lf %.0lf %d %s %s\n",
+                    c->begin.tv_sec, c->begin.tv_nsec / 1000, dur, tput, estTput,
+                    c->bitrate, inet_ntoa(c->peer.sin_addr), c->chunkName);
         }
     }
 
