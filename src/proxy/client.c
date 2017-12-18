@@ -274,7 +274,7 @@ static void dnsHandler(Socket *s, Conn *c) {
 
     DNSResponse *resp = (DNSResponse *)dnsBuf;
 
-    if (memcpy(resp->magic, ResponseMagic, ResponseSize)) {
+    if (memcmp(resp->magic, ResponseMagic, ResponseSize)) {
         logv("dns response error");
         server.release(c->proxy);
         release(s);
