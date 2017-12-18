@@ -18,7 +18,7 @@ static const char *ignoreHeaders[IgnoreSize] = {
 };
 
 static const char *defaultHeaders =
-    "\r\nHost: " ConfigHost
+    "\r\nHost: " BackendHost
     "\r\nConnection: close\r\n";
 
 typedef struct {

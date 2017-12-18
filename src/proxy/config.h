@@ -4,7 +4,6 @@
 #include "common.h"
 
 #define ConfigBackendPort 8080
-#define ConfigHost        "video.pku.edu.cn"
 
 extern struct Config {
     // parse args

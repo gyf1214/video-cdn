@@ -1,5 +1,5 @@
-#ifndef __PROXY_COMMON
-#define __PROXY_COMMON
+#ifndef __COMMON_INC
+#define __COMMON_INC
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -14,6 +14,8 @@
 #include <arpa/inet.h>
 #include <assert.h>
 #include <errno.h>
+
+#include "dns.h"
 
 #ifdef NDEBUG
 #undef assert

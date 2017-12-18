@@ -25,7 +25,7 @@ static void parse(int argc, char **argv) {
     addr->sin_port = htons(port);
 
     config.backendPort = htons(ConfigBackendPort);
-    config.backendHost = ConfigHost;
+    config.backendHost = BackendHost;
 
     if (argc > 7) {
         config.backendIP = inet_addr(argv[7]);

@@ -12,30 +12,14 @@ static struct {
     int listSize;
     int list[MaxListSize];
     int minRate;
-
-    char encodedHost[MaxListSize];
-    char dns[MaxDNSSize];
 } local;
 
 static void init() {
+    srand(time(NULL));
+
     local.avgTput = 0.0;
     local.listSize = 0;
     local.minRate = 0;
-
-    char *str = local.encodedHost;
-    char *now = (char *)config.backendHost;
-    for (;;) {
-        char *next = strchr(now, '.');
-        if (!next) {
-            break;
-        }
-
-        int size = next - now;
-        *str++ = size;
-        memcpy(str, now, size);
-        now = next + 1;
-    }
-    *str = 0;
 }
 
 static const char *itoaImp(int x) {
@@ -101,7 +85,7 @@ static int findBitrate() {
 // static void queryDNS() {
 //     Socket *sock = io.socket(SOCK_DGRAM, &config.local);
 //
-//     int size = 0;
+//     DNSRequest req;
 //
 // }
 
