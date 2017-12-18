@@ -29,21 +29,4 @@ typedef struct DNSResponse {
     uint32_t addr;
 } DNSResponse;
 
-inline static DNSRequest getDNSRequest(uint16_t id) {
-    DNSRequest req;
-    req.id = id;
-    memcpy(req.magic, QueryMagic, QuerySize);
-
-    return req;
-}
-
-inline static DNSResponse getDNSResponse(uint16_t id, uint32_t addr) {
-    DNSResponse resp;
-    resp.id = id;
-    resp.addr = addr;
-    memcpy(resp.magic, ResponseMagic, ResponseSize);
-
-    return resp;
-}
-
 #endif

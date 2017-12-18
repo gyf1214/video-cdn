@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
 
     success(bind(sock, (struct sockaddr *)&local, sizeof(struct sockaddr_in)));
 
-    response = getDNSResponse(0, 0);
+    memcpy(response.magic, ResponseMagic, ResponseSize);
     for (;;) {
         struct sockaddr_in peer;
         socklen_t len = sizeof(struct sockaddr_in);
