@@ -1,0 +1,36 @@
+#!/bin/bash
+
+margin=10
+proxy1="bin/proxy log/2-1.log $1 8887 1.0.0.1 7.0.0.1 5300"
+proxy2="bin/proxy log/2-2.log $1 8888 2.0.0.1 7.0.0.1 5300"
+proxy3="bin/proxy log/2-3.log $1 8889 3.0.0.1 7.0.0.1 5300"
+
+dns="bin/nameserver log/2-ns.log 7.0.0.1 5300 topos/topo2/topo2.servers topos/topo2/topo2.lsa"
+
+echo "start netsim"
+pushd netsim
+./netsim.py ../topos/topo2 start
+popd
+
+echo "start nameserver..."
+$dns 2> log/2-ns-v.log&
+
+echo "start proxy..."
+$proxy1 2> log/2-1-v.log&
+$proxy2 2> log/2-2-v.log&
+$proxy3 2> log/2-3-v.log&
+
+echo "wait for start video..."
+sleep $margin
+
+echo "run netsim..."
+pushd netsim
+./netsim.py -l ../log/1-n.log ../topos/topo2 run
+popd
+
+echo "wait for stop video..."
+sleep $margin
+
+echo "stop..."
+killall bin/proxy
+killall bin/nameserver
