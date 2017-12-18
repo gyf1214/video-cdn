@@ -14,7 +14,7 @@ OBJPROXY = $(patsubst %,$(OBJPATH)/$(PROXY)/%.o,$(LIBPROXY))
 
 DNS = nameserver
 TARDNS = $(TARPATH)/$(DNS)
-LIBDNS = main config server
+LIBDNS = main config server util
 OBJDNS = $(patsubst %,$(OBJPATH)/$(DNS)/%.o,$(LIBDNS))
 
 all: $(TARPROXY) $(TARDNS)

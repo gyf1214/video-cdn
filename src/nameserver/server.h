@@ -6,7 +6,7 @@
 extern struct Server {
     void (*create)(struct sockaddr_in *);
 
-    void (*loop)();
+    void (*loop)(void);
 } server;
 
 #endif

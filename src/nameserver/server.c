@@ -1,4 +1,5 @@
 #include "server.h"
+#include "util.h"
 
 #define BufferSize 512
 
@@ -51,14 +52,15 @@ static void loop() {
         const char *magic = QueryMagic + QueryHeader;
 
         if (memcmp(pat, magic, QuerySize - QueryHeader)) {
+            logv("dns request error");
             local.err.id = req->id;
             sendto(local.fd, &local.err, sizeof(DNSError), 0,
                   (struct sockaddr *)&local.peer, len);
         } else {
+            logv("handle dns request");
             local.resp.id = req->id;
 
-            // TODO
-            local.resp.addr = inet_addr("1.2.3.4");
+            local.resp.addr = util.resolve(local.peer.sin_addr.s_addr);
 
             sendto(local.fd, &local.resp, sizeof(DNSResponse), 0,
                   (struct sockaddr *)&local.peer, len);
