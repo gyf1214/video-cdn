@@ -18,12 +18,14 @@
                         "\x00\x00\x00\x00"\
                         "\x00\x04"
 
-typedef struct DNSRequest {
+#define Packed          __attribute__((__packed__))
+
+typedef struct Packed DNSRequest {
     uint16_t id;
     char magic[QuerySize];
 } DNSRequest;
 
-typedef struct DNSResponse {
+typedef struct Packed DNSResponse {
     uint16_t id;
     char magic[ResponseSize];
     uint32_t addr;
