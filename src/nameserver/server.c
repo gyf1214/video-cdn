@@ -67,3 +67,7 @@ static void loop() {
 
     logv("loop end");
 }
+
+struct Server server = {
+    create, loop
+};
