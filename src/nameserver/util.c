@@ -70,6 +70,7 @@ static void init() {
         int k = findNode(name, 1);
         local.server[local.ns].id = k;
         local.server[local.ns].ip = inet_addr(name);
+        local.ns++;
         logv("server %s at node %d", name, k);
     }
     fclose(config.servers);
