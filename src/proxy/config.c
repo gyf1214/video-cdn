@@ -4,6 +4,8 @@ static void parse(int argc, char **argv) {
     assert(argc > 6);
 
     config.logging = fopen(argv[1], "w");
+    assert(config.logging);
+
     assert(sscanf(argv[2], "%f", &config.alpha) == 1);
 
     uint16_t port;
