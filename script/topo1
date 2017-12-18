@@ -1,8 +1,8 @@
 #!/bin/bash
 
 margin=10
-proxy1="bin/proxy log/1-1.log $1 8888 1.0.0.1 5.0.0.1 5300 3.0.0.1"
-proxy2="bin/proxy log/1-2.log $1 8889 2.0.0.1 5.0.0.1 5300 4.0.0.1"
+proxy1="bin/proxy log/1-1.log $1 8888 1.0.0.1 5.0.0.1 5300"
+proxy2="bin/proxy log/1-2.log $1 8889 2.0.0.1 5.0.0.1 5300"
 dns="bin/nameserver -r log/1-ns.log 5.0.0.1 5300 topos/topo1/topo1.servers topos/topo1/topo1.lsa"
 
 echo "start netsim"
