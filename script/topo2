@@ -5,7 +5,7 @@ proxy1="bin/proxy log/2-1.log $1 8887 1.0.0.1 7.0.0.1 5300"
 proxy2="bin/proxy log/2-2.log $1 8888 2.0.0.1 7.0.0.1 5300"
 proxy3="bin/proxy log/2-3.log $1 8889 3.0.0.1 7.0.0.1 5300"
 
-dns="bin/nameserver log/2-ns.log 7.0.0.1 5300 topos/topo2/topo2.servers topos/topo2/topo2.lsa"
+dns="bin/nameserver $2 log/2-ns.log 7.0.0.1 5300 topos/topo2/topo2.servers topos/topo2/topo2.lsa"
 
 echo "start netsim"
 pushd netsim
