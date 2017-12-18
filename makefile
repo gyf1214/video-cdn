@@ -13,9 +13,9 @@ LIBPROXY = main config io server buffer client util
 OBJPROXY = $(patsubst %,$(OBJPATH)/$(PROXY)/%.o,$(LIBPROXY))
 
 DNS = nameserver
-TARDNS = $(TARPATH)/$(PROXY)
+TARDNS = $(TARPATH)/$(DNS)
 LIBDNS = main
-OBJDNS = $(patsubst %,$(OBJPATH)/$(PROXY)/%.o,$(LIBPROXY))
+OBJDNS = $(patsubst %,$(OBJPATH)/$(DNS)/%.o,$(LIBDNS))
 
 all: $(TARPROXY) $(TARDNS)
 	mkdir -p $(LOGPATH)
