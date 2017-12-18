@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
     struct sockaddr_in local;
     local.sin_family = AF_INET;
     local.sin_addr.s_addr = INADDR_ANY;
-    local.sin_port = htons(5353);
+    local.sin_port = htons(5300);
 
     success(bind(sock, (struct sockaddr *)&local, sizeof(struct sockaddr_in)));
 
