@@ -23,5 +23,6 @@
 * link1 500kbit 0ms  # press enter to decrease BW to 500 kb/s
 0 link2 500kbit 0ms  # decrease BW to 500 kb/s
 0 link3 500kbit 0ms  # decrease BW to 500 kb/s
+* link1 500kbit 0ms
 
 # continue with your own test scenarios...
