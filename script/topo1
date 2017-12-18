@@ -11,7 +11,7 @@ pushd netsim
 popd
 
 echo "start nameserver..."
-$dns 2> log/1-ns-v.log
+$dns 2> log/1-ns-v.log&
 
 echo "start proxy..."
 $proxy1 2> log/1-1-v.log&
