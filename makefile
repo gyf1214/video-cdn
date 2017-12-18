@@ -29,6 +29,10 @@ $(TARPROXY) : $(OBJPROXY)
 	mkdir -p $(dir $@)
 	$(CC) $(LDFLAGS) -o $@ $^
 
+$(TARDNS) : $(OBJDNS)
+	mkdir -p $(dir $@)
+	$(CC) $(LDFLAGS) -o $@ $^
+
 $(OBJPATH)/%.o : $(SRCPATH)/%.c makefile
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c -o $@ $<
