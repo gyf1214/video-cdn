@@ -111,7 +111,7 @@ static int findNearest(uint32_t src) {
             break;
         }
     }
-    if (i >= local.ns) return findRandom();
+    if (i >= local.nh) return findRandom();
 
     int k = local.host[i].id;
     int best = MaxNodes;
